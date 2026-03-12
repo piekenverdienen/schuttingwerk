@@ -148,12 +148,22 @@
         }
 
         // Plaatsing (snelbeton mortel)
+        var mortelSeg = Math.max(0, Math.round(len / 1.80));
         var plPlaatsing = $('#swk-pl-plaatsing');
         if (plPlaatsing) plPlaatsing.style.display = S.plaatsing === 'mortel' ? 'flex' : 'none';
         if (S.plaatsing === 'mortel') {
-            var mortelSeg = Math.max(0, Math.round(len / 1.80));
             var pvPlaatsing = $('#swk-pv-plaatsing');
             if (pvPlaatsing) pvPlaatsing.textContent = fmt(mortelSeg * 14.50);
+        }
+
+        // Update mortel price display in placement option
+        var mortelPriceEl = $('#swk-mortel-price');
+        if (mortelPriceEl) {
+            if (len > 0) {
+                mortelPriceEl.textContent = fmt(mortelSeg * 14.50) + ' (' + mortelSeg + ' seg.)';
+            } else {
+                mortelPriceEl.textContent = '\u20AC14,50 /segment';
+            }
         }
 
         // Poort
