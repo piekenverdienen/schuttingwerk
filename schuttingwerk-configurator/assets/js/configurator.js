@@ -40,6 +40,7 @@
         situatie: '1',
         sides:    [0],
         paal:     'grijs',
+        plaatsing: 'geen',
         extras:   {}
     };
 
@@ -81,6 +82,12 @@
                 t += ex.price;
             }
         });
+
+        // Plaatsing: snelbeton mortel = €14,50 per segment
+        if (S.plaatsing === 'mortel') {
+            var seg = Math.max(0, Math.round(len / 1.80));
+            t += seg * 14.50;
+        }
 
         return t;
     }
@@ -138,6 +145,15 @@
             if (plPaalLabel) plPaalLabel.textContent = 'Betonpalen ' + S.paal;
             var pvPaal = $('#swk-pv-paal');
             if (pvPaal) pvPaal.textContent = fmt(paalCost);
+        }
+
+        // Plaatsing (snelbeton mortel)
+        var plPlaatsing = $('#swk-pl-plaatsing');
+        if (plPlaatsing) plPlaatsing.style.display = S.plaatsing === 'mortel' ? 'flex' : 'none';
+        if (S.plaatsing === 'mortel') {
+            var mortelSeg = Math.max(0, Math.round(len / 1.80));
+            var pvPlaatsing = $('#swk-pv-plaatsing');
+            if (pvPlaatsing) pvPlaatsing.textContent = fmt(mortelSeg * 14.50);
         }
 
         // Poort
@@ -219,11 +235,12 @@
 
         var html = '<div class="swk-fs-title">Uw configuratie</div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Type</span><span class="swk-fs-v">' + (mat ? mat.label : '') + '</span></div>';
-        html += '<div class="swk-fs-row"><span class="swk-fs-l">Plaatsing</span><span class="swk-fs-v">' + S.orient.charAt(0).toUpperCase() + S.orient.slice(1) + '</span></div>';
+        html += '<div class="swk-fs-row"><span class="swk-fs-l">Ori\u00ebntatie</span><span class="swk-fs-v">' + S.orient.charAt(0).toUpperCase() + S.orient.slice(1) + '</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Planken</span><span class="swk-fs-v">' + S.planken + ' per segment</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Situatie</span><span class="swk-fs-v">' + sides + '</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Totale lengte</span><span class="swk-fs-v">' + len.toFixed(1) + ' meter</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Betonpalen</span><span class="swk-fs-v">' + S.paal.charAt(0).toUpperCase() + S.paal.slice(1) + '</span></div>';
+        html += '<div class="swk-fs-row"><span class="swk-fs-l">Plaatsing</span><span class="swk-fs-v">' + (S.plaatsing === 'mortel' ? 'Snelbeton mortel' : 'Lever niets mee') + '</span></div>';
 
         Object.keys(S.extras).forEach(function (k) {
             if (!S.extras[k]) return;
@@ -367,6 +384,23 @@
                 $$('[data-swk-paal]').forEach(function (e) { e.classList.remove('swk-selected'); });
                 el.classList.add('swk-selected');
                 S.paal = el.getAttribute('data-swk-paal');
+                refresh();
+            });
+        });
+    }
+
+    // Step 5b: Plaatsing selection (snelbeton mortel / lever niets mee)
+    function initPlacement() {
+        $$('.swk-placement-option').forEach(function (el) {
+            el.addEventListener('click', function () {
+                $$('.swk-placement-option').forEach(function (e) { e.classList.remove('swk-selected'); });
+                el.classList.add('swk-selected');
+                S.plaatsing = el.getAttribute('data-swk-placement');
+
+                // Update the "current" label in the header
+                var currentEl = $('#swk-placement-current');
+                if (currentEl) currentEl.textContent = S.plaatsing === 'mortel' ? 'Snelbeton mortel' : 'Lever niets mee';
+
                 refresh();
             });
         });
@@ -598,6 +632,7 @@
                     situatie:    S.situatie,
                     zijden:      S.sides,
                     betonpaal:   S.paal,
+                    plaatsing:   S.plaatsing,
                     extras:      S.extras,
                     totaalprijs: calcTotal()
                 }
@@ -705,6 +740,7 @@
         initPlankenSelection();
         initSituatieSelection();
         initPaalSelection();
+        initPlacement();
         initExtras();
         initPoortModal();
         initProgressBar();

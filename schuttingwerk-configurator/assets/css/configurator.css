@@ -900,6 +900,82 @@
     font-weight: 700;
 }
 
+/* === PLACEMENT (Plaatsing) === */
+.swk-placement-section {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--swk-g2);
+}
+
+.swk-placement-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.swk-placement-title {
+    font-weight: 700;
+    font-size: .88rem;
+}
+
+.swk-placement-current {
+    font-size: .78rem;
+    color: var(--swk-g5);
+}
+
+.swk-placement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.swk-placement-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border: 2px solid var(--swk-g2);
+    border-radius: var(--swk-r);
+    cursor: pointer;
+    transition: all .2s;
+}
+
+.swk-placement-option:hover {
+    border-color: var(--swk-g3);
+}
+
+.swk-placement-option.swk-selected {
+    border-color: var(--swk-gr);
+    background: var(--swk-gbg);
+}
+
+.swk-placement-label {
+    font-weight: 600;
+    font-size: .85rem;
+}
+
+.swk-placement-price {
+    font-weight: 600;
+    font-size: .85rem;
+    color: var(--swk-bk);
+}
+
+.swk-placement-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: var(--swk-gr);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.swk-placement-option:not(.swk-selected) .swk-placement-check {
+    display: none;
+}
+
 /* === EXTRAS === */
 .swk-extras-list {
     display: flex;

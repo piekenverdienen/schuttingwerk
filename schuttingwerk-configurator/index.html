@@ -25,8 +25,8 @@ var swkData = {
     },
     paalExtra: {
         grijs: 0,
-        antraciet: 4.5,
-        wit: 4.5
+        antraciet: 0,
+        wit: 0
     },
     extras: {
         poort:      { label: 'Looppoort toevoegen',  desc: '100 cm breed, incl. hang- en sluitwerk', price: 289, icon: '\uD83D\uDEAA', unit: 'fixed' },
@@ -405,12 +405,27 @@ var swkData = {
                     <div class="swk-choice" data-swk-paal="antraciet">
                         <div class="swk-choice-dot" style="background:#333;border-color:#222"></div>
                         <div class="swk-choice-num">Antraciet</div>
-                        <div class="swk-choice-sub">+ &euro;4,50 /m</div>
                     </div>
                     <div class="swk-choice" data-swk-paal="wit">
                         <div class="swk-choice-dot" style="background:#f5f5f0;border-color:#ddd"></div>
                         <div class="swk-choice-num">Wit</div>
-                        <div class="swk-choice-sub">+ &euro;4,50 /m</div>
+                    </div>
+                </div>
+
+                <div class="swk-placement-section">
+                    <div class="swk-placement-header">
+                        <span class="swk-placement-title">Plaatsing</span>
+                        <span class="swk-placement-current" id="swk-placement-current">Lever niets mee</span>
+                    </div>
+                    <div class="swk-placement-list">
+                        <div class="swk-placement-option" data-swk-placement="mortel">
+                            <span class="swk-placement-label">Snelbeton mortel</span>
+                            <span class="swk-placement-price">&euro;14,50</span>
+                        </div>
+                        <div class="swk-placement-option swk-selected" data-swk-placement="geen">
+                            <span class="swk-placement-label">Lever niets mee</span>
+                            <span class="swk-placement-check"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7l4 4 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -579,6 +594,10 @@ var swkData = {
                     <div class="swk-price-line" id="swk-pl-paal" style="display:none">
                         <span class="swk-price-line-label" id="swk-pl-paal-label">Betonpalen upgrade</span>
                         <span class="swk-price-line-value" id="swk-pv-paal">&euro;0,00</span>
+                    </div>
+                    <div class="swk-price-line" id="swk-pl-plaatsing" style="display:none">
+                        <span class="swk-price-line-label">Snelbeton mortel</span>
+                        <span class="swk-price-line-value" id="swk-pv-plaatsing">&euro;0,00</span>
                     </div>
                     <div class="swk-price-line" id="swk-pl-poort" style="display:none">
                         <span class="swk-price-line-label" id="swk-pl-poort-label">Looppoort</span>
