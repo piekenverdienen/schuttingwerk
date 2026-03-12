@@ -15,6 +15,7 @@
     var PAAL_EX   = CFG.paalExtra  || {};
     var EXTRAS    = CFG.extras     || {};
     var PHOTOS    = CFG.photos     || {};
+    var POORTEN   = CFG.poorten    || {};
     var REST_URL  = CFG.restUrl    || '';
     var NONCE     = CFG.nonce      || '';
 
@@ -39,6 +40,7 @@
         situatie: '1',
         sides:    [0],
         paal:     'grijs',
+        plaatsing: 'geen',
         extras:   {}
     };
 
@@ -67,6 +69,11 @@
 
         Object.keys(S.extras).forEach(function (k) {
             if (!S.extras[k]) return;
+            // Poort is stored as object { index, label, price }
+            if (k === 'poort' && typeof S.extras.poort === 'object') {
+                t += S.extras.poort.price;
+                return;
+            }
             var ex = EXTRAS[k];
             if (!ex) return;
             if (ex.unit === 'per_meter') {
@@ -75,6 +82,12 @@
                 t += ex.price;
             }
         });
+
+        // Plaatsing: snelbeton mortel = €14,50 per segment
+        if (S.plaatsing === 'mortel') {
+            var seg = Math.max(0, Math.round(len / 1.80));
+            t += seg * 14.50;
+        }
 
         return t;
     }
@@ -134,9 +147,25 @@
             if (pvPaal) pvPaal.textContent = fmt(paalCost);
         }
 
+        // Plaatsing (snelbeton mortel)
+        var plPlaatsing = $('#swk-pl-plaatsing');
+        if (plPlaatsing) plPlaatsing.style.display = S.plaatsing === 'mortel' ? 'flex' : 'none';
+        if (S.plaatsing === 'mortel') {
+            var mortelSeg = Math.max(0, Math.round(len / 1.80));
+            var pvPlaatsing = $('#swk-pv-plaatsing');
+            if (pvPlaatsing) pvPlaatsing.textContent = fmt(mortelSeg * 14.50);
+        }
+
         // Poort
+        var poortSelected = S.extras.poort && typeof S.extras.poort === 'object';
         var plPoort = $('#swk-pl-poort');
-        if (plPoort) plPoort.style.display = S.extras.poort ? 'flex' : 'none';
+        if (plPoort) plPoort.style.display = poortSelected ? 'flex' : 'none';
+        if (poortSelected) {
+            var pvPoort = $('#swk-pv-poort');
+            if (pvPoort) pvPoort.textContent = fmt(S.extras.poort.price);
+            var plPoortLabel = $('#swk-pl-poort-label');
+            if (plPoortLabel) plPoortLabel.textContent = S.extras.poort.label;
+        }
 
         // Montage
         var plMontage = $('#swk-pl-montage');
@@ -206,14 +235,20 @@
 
         var html = '<div class="swk-fs-title">Uw configuratie</div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Type</span><span class="swk-fs-v">' + (mat ? mat.label : '') + '</span></div>';
-        html += '<div class="swk-fs-row"><span class="swk-fs-l">Plaatsing</span><span class="swk-fs-v">' + S.orient.charAt(0).toUpperCase() + S.orient.slice(1) + '</span></div>';
+        html += '<div class="swk-fs-row"><span class="swk-fs-l">Ori\u00ebntatie</span><span class="swk-fs-v">' + S.orient.charAt(0).toUpperCase() + S.orient.slice(1) + '</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Planken</span><span class="swk-fs-v">' + S.planken + ' per segment</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Situatie</span><span class="swk-fs-v">' + sides + '</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Totale lengte</span><span class="swk-fs-v">' + len.toFixed(1) + ' meter</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Betonpalen</span><span class="swk-fs-v">' + S.paal.charAt(0).toUpperCase() + S.paal.slice(1) + '</span></div>';
+        html += '<div class="swk-fs-row"><span class="swk-fs-l">Plaatsing</span><span class="swk-fs-v">' + (S.plaatsing === 'mortel' ? 'Snelbeton mortel' : 'Lever niets mee') + '</span></div>';
 
         Object.keys(S.extras).forEach(function (k) {
-            if (S.extras[k] && EXTRAS[k]) {
+            if (!S.extras[k]) return;
+            if (k === 'poort' && typeof S.extras.poort === 'object') {
+                html += '<div class="swk-fs-row"><span class="swk-fs-l">Looppoort</span><span class="swk-fs-v">' + S.extras.poort.label + ' (' + fmt(S.extras.poort.price) + ')</span></div>';
+                return;
+            }
+            if (EXTRAS[k]) {
                 html += '<div class="swk-fs-row"><span class="swk-fs-l">' + EXTRAS[k].label + '</span><span class="swk-fs-v">Ja</span></div>';
             }
         });
@@ -244,6 +279,19 @@
                 $$('.swk-type-card').forEach(function (e) { e.classList.remove('swk-selected'); });
                 el.classList.add('swk-selected');
                 S.type = el.getAttribute('data-swk-type');
+
+                // Reset poort selection when switching material type
+                if (S.extras.poort) {
+                    S.extras.poort = false;
+                    var poortEl = document.querySelector('[data-swk-extra="poort"]');
+                    if (poortEl) {
+                        poortEl.classList.remove('swk-on');
+                        var toggle = poortEl.querySelector('.swk-toggle');
+                        if (toggle) toggle.classList.remove('swk-on');
+                    }
+                    updatePoortExtraDesc();
+                }
+
                 refresh();
             });
         });
@@ -341,11 +389,45 @@
         });
     }
 
+    // Step 5b: Plaatsing selection (snelbeton mortel / lever niets mee)
+    function initPlacement() {
+        $$('.swk-placement-option').forEach(function (el) {
+            el.addEventListener('click', function () {
+                $$('.swk-placement-option').forEach(function (e) { e.classList.remove('swk-selected'); });
+                el.classList.add('swk-selected');
+                S.plaatsing = el.getAttribute('data-swk-placement');
+
+                // Update the "current" label in the header
+                var currentEl = $('#swk-placement-current');
+                if (currentEl) currentEl.textContent = S.plaatsing === 'mortel' ? 'Snelbeton mortel' : 'Lever niets mee';
+
+                refresh();
+            });
+        });
+    }
+
     // Step 6: Extras toggles
     function initExtras() {
         $$('.swk-extra').forEach(function (el) {
             el.addEventListener('click', function () {
                 var key = el.getAttribute('data-swk-extra');
+
+                if (key === 'poort') {
+                    if (S.extras.poort) {
+                        // Deselect poort
+                        S.extras.poort = false;
+                        el.classList.remove('swk-on');
+                        var toggle = el.querySelector('.swk-toggle');
+                        if (toggle) toggle.classList.remove('swk-on');
+                        updatePoortExtraDesc();
+                        refresh();
+                    } else {
+                        // Open poort modal
+                        openPoortModal();
+                    }
+                    return;
+                }
+
                 S.extras[key] = !S.extras[key];
                 el.classList.toggle('swk-on', S.extras[key]);
                 var toggle = el.querySelector('.swk-toggle');
@@ -353,6 +435,90 @@
                 refresh();
             });
         });
+    }
+
+    // Update poort extra description to show selected gate
+    function updatePoortExtraDesc() {
+        var el = document.querySelector('[data-swk-extra="poort"]');
+        if (!el) return;
+        var descEl = el.querySelector('.swk-extra-desc');
+        var priceEl = el.querySelector('.swk-extra-price');
+        if (S.extras.poort && typeof S.extras.poort === 'object') {
+            if (descEl) descEl.textContent = S.extras.poort.label;
+            if (priceEl) priceEl.textContent = '+ ' + fmt(S.extras.poort.price);
+        } else {
+            if (descEl) descEl.textContent = 'Kies een poortmaat';
+            if (priceEl) priceEl.textContent = 'vanaf \u20AC329,95';
+        }
+    }
+
+    // Poort modal
+    function openPoortModal() {
+        var modal = $('#swk-poort-modal');
+        var grid  = $('#swk-poort-grid');
+        if (!modal || !grid) return;
+
+        var gates = POORTEN[S.type] || POORTEN.grenen || [];
+        var html = '';
+
+        gates.forEach(function (gate, i) {
+            var selected = S.extras.poort && typeof S.extras.poort === 'object' && S.extras.poort.index === i;
+            html += '<div class="swk-poort-card' + (selected ? ' swk-selected' : '') + '" data-swk-poort-idx="' + i + '">';
+            html += '<img class="swk-poort-card-img" src="' + gate.image + '" alt="' + gate.label + '" onerror="this.style.background=\'#e8e8e4\';this.alt=\'Afbeelding niet beschikbaar\'">';
+            html += '<div class="swk-poort-card-body">';
+            html += '<div class="swk-poort-card-label">' + gate.label + '</div>';
+            html += '<div class="swk-poort-card-price">' + fmt(gate.price) + '</div>';
+            html += '</div></div>';
+        });
+
+        grid.innerHTML = html;
+
+        // Bind click events on gate cards
+        grid.querySelectorAll('.swk-poort-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                var idx = parseInt(card.getAttribute('data-swk-poort-idx'), 10);
+                var gate = gates[idx];
+                if (!gate) return;
+
+                S.extras.poort = { index: idx, label: gate.label, price: gate.price };
+
+                // Update the toggle visual
+                var poortEl = document.querySelector('[data-swk-extra="poort"]');
+                if (poortEl) {
+                    poortEl.classList.add('swk-on');
+                    var toggle = poortEl.querySelector('.swk-toggle');
+                    if (toggle) toggle.classList.add('swk-on');
+                }
+
+                updatePoortExtraDesc();
+                closePoortModal();
+                refresh();
+            });
+        });
+
+        modal.classList.add('swk-modal-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePoortModal() {
+        var modal = $('#swk-poort-modal');
+        if (modal) modal.classList.remove('swk-modal-open');
+        document.body.style.overflow = '';
+    }
+
+    function initPoortModal() {
+        var closeBtn = $('#swk-poort-modal-close');
+        if (closeBtn) closeBtn.addEventListener('click', closePoortModal);
+
+        var overlay = $('#swk-poort-modal');
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closePoortModal();
+            });
+        }
+
+        // Set initial poort description
+        updatePoortExtraDesc();
     }
 
     // Progress bar navigation
@@ -466,6 +632,7 @@
                     situatie:    S.situatie,
                     zijden:      S.sides,
                     betonpaal:   S.paal,
+                    plaatsing:   S.plaatsing,
                     extras:      S.extras,
                     totaalprijs: calcTotal()
                 }
@@ -573,7 +740,9 @@
         initPlankenSelection();
         initSituatieSelection();
         initPaalSelection();
+        initPlacement();
         initExtras();
+        initPoortModal();
         initProgressBar();
         initCTA();
         initLocationToggle();
