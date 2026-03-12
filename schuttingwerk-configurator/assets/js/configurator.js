@@ -407,10 +407,6 @@
                 el.classList.add('swk-selected');
                 S.plaatsing = el.getAttribute('data-swk-placement');
 
-                // Update the "current" label in the header
-                var currentEl = $('#swk-placement-current');
-                if (currentEl) currentEl.textContent = S.plaatsing === 'mortel' ? 'Snelbeton mortel' : 'Lever niets mee';
-
                 refresh();
             });
         });
@@ -560,7 +556,7 @@
 
     // Open form (step 7)
     function openForm() {
-        var s7 = $('#swk-s7');
+        var s7 = $('#swk-s8');
         if (!s7) return;
         buildSummary();
         s7.style.display = '';
@@ -677,7 +673,7 @@
     }
 
     function showSuccess(naam, email) {
-        var section = $('#swk-s7');
+        var section = $('#swk-s8');
         if (!section) return;
         var body = section.querySelector('.swk-card-body');
         if (!body) return;
