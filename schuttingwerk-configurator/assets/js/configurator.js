@@ -15,6 +15,7 @@
     var PAAL_EX   = CFG.paalExtra  || {};
     var EXTRAS    = CFG.extras     || {};
     var PHOTOS    = CFG.photos     || {};
+    var POORTEN   = CFG.poorten    || {};
     var REST_URL  = CFG.restUrl    || '';
     var NONCE     = CFG.nonce      || '';
 
@@ -67,6 +68,11 @@
 
         Object.keys(S.extras).forEach(function (k) {
             if (!S.extras[k]) return;
+            // Poort is stored as object { index, label, price }
+            if (k === 'poort' && typeof S.extras.poort === 'object') {
+                t += S.extras.poort.price;
+                return;
+            }
             var ex = EXTRAS[k];
             if (!ex) return;
             if (ex.unit === 'per_meter') {
@@ -135,8 +141,15 @@
         }
 
         // Poort
+        var poortSelected = S.extras.poort && typeof S.extras.poort === 'object';
         var plPoort = $('#swk-pl-poort');
-        if (plPoort) plPoort.style.display = S.extras.poort ? 'flex' : 'none';
+        if (plPoort) plPoort.style.display = poortSelected ? 'flex' : 'none';
+        if (poortSelected) {
+            var pvPoort = $('#swk-pv-poort');
+            if (pvPoort) pvPoort.textContent = fmt(S.extras.poort.price);
+            var plPoortLabel = $('#swk-pl-poort-label');
+            if (plPoortLabel) plPoortLabel.textContent = S.extras.poort.label;
+        }
 
         // Montage
         var plMontage = $('#swk-pl-montage');
@@ -213,7 +226,12 @@
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Betonpalen</span><span class="swk-fs-v">' + S.paal.charAt(0).toUpperCase() + S.paal.slice(1) + '</span></div>';
 
         Object.keys(S.extras).forEach(function (k) {
-            if (S.extras[k] && EXTRAS[k]) {
+            if (!S.extras[k]) return;
+            if (k === 'poort' && typeof S.extras.poort === 'object') {
+                html += '<div class="swk-fs-row"><span class="swk-fs-l">Looppoort</span><span class="swk-fs-v">' + S.extras.poort.label + ' (' + fmt(S.extras.poort.price) + ')</span></div>';
+                return;
+            }
+            if (EXTRAS[k]) {
                 html += '<div class="swk-fs-row"><span class="swk-fs-l">' + EXTRAS[k].label + '</span><span class="swk-fs-v">Ja</span></div>';
             }
         });
@@ -244,6 +262,19 @@
                 $$('.swk-type-card').forEach(function (e) { e.classList.remove('swk-selected'); });
                 el.classList.add('swk-selected');
                 S.type = el.getAttribute('data-swk-type');
+
+                // Reset poort selection when switching material type
+                if (S.extras.poort) {
+                    S.extras.poort = false;
+                    var poortEl = document.querySelector('[data-swk-extra="poort"]');
+                    if (poortEl) {
+                        poortEl.classList.remove('swk-on');
+                        var toggle = poortEl.querySelector('.swk-toggle');
+                        if (toggle) toggle.classList.remove('swk-on');
+                    }
+                    updatePoortExtraDesc();
+                }
+
                 refresh();
             });
         });
@@ -346,6 +377,23 @@
         $$('.swk-extra').forEach(function (el) {
             el.addEventListener('click', function () {
                 var key = el.getAttribute('data-swk-extra');
+
+                if (key === 'poort') {
+                    if (S.extras.poort) {
+                        // Deselect poort
+                        S.extras.poort = false;
+                        el.classList.remove('swk-on');
+                        var toggle = el.querySelector('.swk-toggle');
+                        if (toggle) toggle.classList.remove('swk-on');
+                        updatePoortExtraDesc();
+                        refresh();
+                    } else {
+                        // Open poort modal
+                        openPoortModal();
+                    }
+                    return;
+                }
+
                 S.extras[key] = !S.extras[key];
                 el.classList.toggle('swk-on', S.extras[key]);
                 var toggle = el.querySelector('.swk-toggle');
@@ -353,6 +401,90 @@
                 refresh();
             });
         });
+    }
+
+    // Update poort extra description to show selected gate
+    function updatePoortExtraDesc() {
+        var el = document.querySelector('[data-swk-extra="poort"]');
+        if (!el) return;
+        var descEl = el.querySelector('.swk-extra-desc');
+        var priceEl = el.querySelector('.swk-extra-price');
+        if (S.extras.poort && typeof S.extras.poort === 'object') {
+            if (descEl) descEl.textContent = S.extras.poort.label;
+            if (priceEl) priceEl.textContent = '+ ' + fmt(S.extras.poort.price);
+        } else {
+            if (descEl) descEl.textContent = 'Kies een poortmaat';
+            if (priceEl) priceEl.textContent = 'vanaf \u20AC329,95';
+        }
+    }
+
+    // Poort modal
+    function openPoortModal() {
+        var modal = $('#swk-poort-modal');
+        var grid  = $('#swk-poort-grid');
+        if (!modal || !grid) return;
+
+        var gates = POORTEN[S.type] || POORTEN.grenen || [];
+        var html = '';
+
+        gates.forEach(function (gate, i) {
+            var selected = S.extras.poort && typeof S.extras.poort === 'object' && S.extras.poort.index === i;
+            html += '<div class="swk-poort-card' + (selected ? ' swk-selected' : '') + '" data-swk-poort-idx="' + i + '">';
+            html += '<img class="swk-poort-card-img" src="' + gate.image + '" alt="' + gate.label + '" onerror="this.style.background=\'#e8e8e4\';this.alt=\'Afbeelding niet beschikbaar\'">';
+            html += '<div class="swk-poort-card-body">';
+            html += '<div class="swk-poort-card-label">' + gate.label + '</div>';
+            html += '<div class="swk-poort-card-price">' + fmt(gate.price) + '</div>';
+            html += '</div></div>';
+        });
+
+        grid.innerHTML = html;
+
+        // Bind click events on gate cards
+        grid.querySelectorAll('.swk-poort-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                var idx = parseInt(card.getAttribute('data-swk-poort-idx'), 10);
+                var gate = gates[idx];
+                if (!gate) return;
+
+                S.extras.poort = { index: idx, label: gate.label, price: gate.price };
+
+                // Update the toggle visual
+                var poortEl = document.querySelector('[data-swk-extra="poort"]');
+                if (poortEl) {
+                    poortEl.classList.add('swk-on');
+                    var toggle = poortEl.querySelector('.swk-toggle');
+                    if (toggle) toggle.classList.add('swk-on');
+                }
+
+                updatePoortExtraDesc();
+                closePoortModal();
+                refresh();
+            });
+        });
+
+        modal.classList.add('swk-modal-open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePoortModal() {
+        var modal = $('#swk-poort-modal');
+        if (modal) modal.classList.remove('swk-modal-open');
+        document.body.style.overflow = '';
+    }
+
+    function initPoortModal() {
+        var closeBtn = $('#swk-poort-modal-close');
+        if (closeBtn) closeBtn.addEventListener('click', closePoortModal);
+
+        var overlay = $('#swk-poort-modal');
+        if (overlay) {
+            overlay.addEventListener('click', function (e) {
+                if (e.target === overlay) closePoortModal();
+            });
+        }
+
+        // Set initial poort description
+        updatePoortExtraDesc();
     }
 
     // Progress bar navigation
@@ -574,6 +706,7 @@
         initSituatieSelection();
         initPaalSelection();
         initExtras();
+        initPoortModal();
         initProgressBar();
         initCTA();
         initLocationToggle();
