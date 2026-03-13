@@ -402,6 +402,15 @@
             var open = extra.style.display !== 'none';
             extra.style.display = open ? 'none' : '';
             toggle.innerHTML = open ? 'Meer opties &#9662;' : 'Minder opties &#9652;';
+
+            // Als we inklappen en de huidige selectie zit bij de extra opties, reset naar 1 zijde
+            if (open) {
+                var selected = extra.querySelector('.swk-sit-item.swk-selected');
+                if (selected) {
+                    var first = document.querySelector('.swk-sit-grid:not(.swk-sit-extra) .swk-sit-item');
+                    if (first) first.click();
+                }
+            }
         });
     }
 
