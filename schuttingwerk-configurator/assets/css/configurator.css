@@ -836,6 +836,29 @@
     margin: 0 auto;
 }
 
+.swk-sit-toggle {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 6px 16px;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--swk-primary, #4A7C59);
+    cursor: pointer;
+    border: 1px solid var(--swk-primary, #4A7C59);
+    border-radius: 6px;
+    background: transparent;
+    transition: background .2s, color .2s;
+}
+
+.swk-sit-toggle:hover {
+    background: var(--swk-primary, #4A7C59);
+    color: #fff;
+}
+
+.swk-sit-extra {
+    margin-top: 10px;
+}
+
 /* === SIDES INPUT === */
 .swk-sides {
     margin-top: 14px;

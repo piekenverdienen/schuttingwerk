@@ -393,6 +393,18 @@
         });
     }
 
+    // Toggle "meer opties" voor extra situaties
+    function initSitToggle() {
+        var toggle = $('#swk-sit-toggle');
+        var extra = $('#swk-sit-extra');
+        if (!toggle || !extra) return;
+        toggle.addEventListener('click', function () {
+            var open = extra.style.display !== 'none';
+            extra.style.display = open ? 'none' : '';
+            toggle.innerHTML = open ? 'Meer opties &#9662;' : 'Minder opties &#9652;';
+        });
+    }
+
     function updateTotalLen() {
         var el = $('#swk-total-len-val');
         if (el) el.textContent = getTotalLen().toFixed(2).replace('.', ',') + ' meter';
@@ -756,6 +768,7 @@
         initOrientSelection();
         initPlankenSelection();
         initSituatieSelection();
+        initSitToggle();
         initPaalSelection();
         initPlacement();
         initExtras();
