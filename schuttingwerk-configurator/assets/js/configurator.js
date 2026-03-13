@@ -20,14 +20,18 @@
     var NONCE     = CFG.nonce      || '';
 
     /* Situation helpers */
-    var SIT_SIDES  = { '1': 1, '2': 2, '3': 3, 't': 3, '4': 4, '5': 5 };
+    var SIT_SIDES  = { '1': 1, '2': 2, '3': 3, 't': 3, '4': 4, '5': 5, '6': 6, '7': 7, '4g': 4, '2p': 2 };
     var SIT_LABELS = {
         '1': ['A'],
         '2': ['A', 'B'],
         '3': ['A', 'B', 'C'],
         't': ['A', 'B', 'C'],
         '4': ['A', 'B', 'C', 'D'],
-        '5': ['A', 'B', 'C', 'D', 'E']
+        '5': ['A', 'B', 'C', 'D', 'E'],
+        '6': ['A', 'B', 'C', 'D', 'E', 'F'],
+        '7': ['A', 'B', 'C', 'D', 'E', 'F', 'G'],
+        '4g': ['A', 'B', 'C', 'D'],
+        '2p': ['A', 'B']
     };
 
     /* ──────────────────────────────────────────
@@ -192,7 +196,14 @@
 
         // Meta stats
         var seg = Math.max(0, Math.round(len / 1.80));
-        var palen = seg > 0 ? seg + 1 : 0;
+        var palen;
+        if (S.situatie === '4g') {
+            palen = seg; // gesloten: geen extra eindpaal
+        } else if (S.situatie === '2p') {
+            palen = seg > 0 ? seg + 2 : 0; // twee losse zijdes
+        } else {
+            palen = seg > 0 ? seg + 1 : 0;
+        }
         var metaSeg = $('#swk-meta-seg');
         if (metaSeg) metaSeg.textContent = seg;
         var metaPalen = $('#swk-meta-palen');

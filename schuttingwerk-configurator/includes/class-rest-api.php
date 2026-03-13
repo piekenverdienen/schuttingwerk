@@ -129,7 +129,7 @@ class SWK_Rest_API {
         }
 
         $situatie = sanitize_text_field( $config['situatie'] ?? '1' );
-        $valid_sit = array( '1', '2', '3', 't', '4', '5' );
+        $valid_sit = array( '1', '2', '3', 't', '4', '5', '6', '7', '4g', '2p' );
         if ( ! in_array( $situatie, $valid_sit, true ) ) {
             $situatie = '1';
         }
@@ -211,6 +211,8 @@ class SWK_Rest_API {
         $sit_labels = array(
             '1' => array( 'A' ), '2' => array( 'A', 'B' ), '3' => array( 'A', 'B', 'C' ),
             't' => array( 'A', 'B', 'C' ), '4' => array( 'A', 'B', 'C', 'D' ), '5' => array( 'A', 'B', 'C', 'D', 'E' ),
+            '6' => array( 'A', 'B', 'C', 'D', 'E', 'F' ), '7' => array( 'A', 'B', 'C', 'D', 'E', 'F', 'G' ),
+            '4g' => array( 'A', 'B', 'C', 'D' ), '2p' => array( 'A', 'B' ),
         );
         $labels = isset( $sit_labels[ $config['situatie'] ] ) ? $sit_labels[ $config['situatie'] ] : array( 'A' );
         $sides_str = '';
