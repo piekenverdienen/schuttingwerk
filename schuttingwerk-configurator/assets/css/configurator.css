@@ -9,8 +9,8 @@
     --swk-dk: #222;
     --swk-gr: #4A7C59;
     --swk-gbg: #EDF5EF;
-    --swk-or: #E8853D;
-    --swk-orh: #D4742F;
+    --swk-or: #4A7C59;
+    --swk-orh: #3D6B4A;
     --swk-g50: #FAFAFA;
     --swk-g1: #F3F3F1;
     --swk-g2: #E5E5E3;
@@ -20,9 +20,9 @@
     --swk-g6: #525250;
     --swk-g7: #3D3D3B;
     --swk-fb: 'Inter', -apple-system, sans-serif;
-    --swk-fd: 'Outfit', 'Inter', sans-serif;
-    --swk-r: 8px;
-    --swk-rl: 12px;
+    --swk-fd: 'Barlow Condensed', 'Inter', sans-serif;
+    --swk-r: 0px;
+    --swk-rl: 0px;
 }
 
 /* === RESET (scoped) === */
@@ -87,13 +87,15 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-logo-icon {
     width: 32px;
     height: 32px;
     background: var(--swk-gr);
-    border-radius: 6px;
+    border-radius: 0px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -132,6 +134,8 @@
     font-weight: 700;
     color: #fff;
     margin: 0 auto 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-page-title p {
@@ -238,7 +242,7 @@
     border-radius: var(--swk-rl);
     border: 1px solid var(--swk-g2);
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, .06);
+    box-shadow: none;
 }
 
 .swk-preview-top {
@@ -310,7 +314,7 @@
     font-size: .65rem;
     font-weight: 600;
     padding: 3px 10px;
-    border-radius: 4px;
+    border-radius: 0px;
     backdrop-filter: blur(4px);
 }
 
@@ -334,7 +338,7 @@
     background: #fff;
     border-radius: var(--swk-rl);
     border: 1px solid var(--swk-g2);
-    box-shadow: 0 1px 6px rgba(0, 0, 0, .05);
+    box-shadow: none;
     overflow: hidden;
 }
 
@@ -344,6 +348,9 @@
     padding: 11px 16px;
     font-size: .82rem;
     font-weight: 600;
+    font-family: var(--swk-fd);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-price-body {
@@ -406,7 +413,7 @@
 .swk-price-per-meter {
     background: var(--swk-gbg);
     padding: 7px 12px;
-    border-radius: 6px;
+    border-radius: 0px;
     display: flex;
     justify-content: space-between;
     font-size: .8rem;
@@ -432,12 +439,14 @@
     font-weight: 700;
     cursor: pointer;
     transition: all .2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-cta:hover {
     background: var(--swk-orh);
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(232, 133, 61, .35);
+    box-shadow: 0 4px 14px rgba(74, 124, 89, .35);
 }
 
 .swk-cta-sub {
@@ -480,7 +489,7 @@
     background: #fff;
     border-radius: var(--swk-rl);
     border: 1px solid var(--swk-g2);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .03);
+    box-shadow: none;
     overflow: hidden;
     transition: border-color .25s, box-shadow .25s;
     animation: swk-fadeUp .35s ease both;
@@ -512,7 +521,7 @@
 .swk-card-icon {
     width: 36px;
     height: 36px;
-    border-radius: 8px;
+    border-radius: 0px;
     background: var(--swk-gbg);
     color: var(--swk-gr);
     display: flex;
@@ -524,6 +533,8 @@
     font-family: var(--swk-fd);
     font-size: 1.05rem;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-card-desc {
@@ -608,7 +619,7 @@
     right: 0;
     bottom: 0;
     background: rgba(30, 30, 30, .92);
-    border-radius: 6px;
+    border-radius: 0px;
     z-index: 3;
     padding: 14px 12px;
     text-align: left;
@@ -656,7 +667,7 @@
 .swk-type-swatch {
     width: 100%;
     height: 36px;
-    border-radius: 4px;
+    border-radius: 0px;
     margin-bottom: 6px;
     background-size: cover;
     background-position: center;
@@ -889,7 +900,7 @@
     margin-top: 8px;
     padding: 10px 14px;
     background: var(--swk-gbg);
-    border-radius: 6px;
+    border-radius: 0px;
     font-size: .85rem;
     display: flex;
     justify-content: space-between;
@@ -964,7 +975,7 @@
 .swk-placement-check {
     width: 22px;
     height: 22px;
-    border-radius: 4px;
+    border-radius: 0px;
     background: var(--swk-gr);
     color: #fff;
     display: flex;
@@ -1012,7 +1023,7 @@
 .swk-extra-icon {
     width: 34px;
     height: 34px;
-    border-radius: 7px;
+    border-radius: 0px;
     background: var(--swk-g1);
     display: flex;
     align-items: center;
@@ -1083,7 +1094,7 @@
 /* === FORM (Step 7) === */
 .swk-form-summary {
     background: var(--swk-gbg);
-    border-radius: 8px;
+    border-radius: 0px;
     padding: 14px 16px;
     margin-bottom: 18px;
     font-size: .82rem;
@@ -1238,6 +1249,8 @@
     font-family: var(--swk-fd);
     font-size: 1.2rem;
     margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-form-success p {
@@ -1291,11 +1304,11 @@
 
 .swk-modal {
     background: #fff;
-    border-radius: 12px;
+    border-radius: 0px;
     width: 100%;
     max-width: 480px;
     overflow: hidden;
-    box-shadow: 0 12px 48px rgba(0, 0, 0, .25);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .15);
     animation: swkModalIn .25s ease;
 }
 
@@ -1314,6 +1327,8 @@
     font-family: var(--swk-fd);
     font-weight: 700;
     font-size: .95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-modal-close {
@@ -1340,6 +1355,8 @@
     font-weight: 700;
     margin: 0 0 16px;
     color: var(--swk-bk);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .swk-poort-grid {
@@ -1350,7 +1367,7 @@
 
 .swk-poort-card {
     border: 2px solid var(--swk-g2);
-    border-radius: 8px;
+    border-radius: 0px;
     overflow: hidden;
     cursor: pointer;
     transition: all .2s;
@@ -1439,7 +1456,7 @@
         left: 0;
         right: 0;
         z-index: 200;
-        border-radius: 14px 14px 0 0;
+        border-radius: 0px;
         box-shadow: 0 -4px 24px rgba(0, 0, 0, .12);
         border: none;
         padding-bottom: env(safe-area-inset-bottom, 0);
@@ -1686,7 +1703,7 @@
     .swk-card-icon {
         width: 32px;
         height: 32px;
-        border-radius: 6px;
+        border-radius: 0px;
     }
 
     .swk-card-title {
@@ -1732,7 +1749,7 @@
     .swk-cta {
         padding: 11px;
         font-size: .85rem;
-        border-radius: 8px;
+        border-radius: 0px;
     }
 
     .swk-page-title {
@@ -1759,7 +1776,7 @@
     .swk-logo-icon {
         width: 28px;
         height: 28px;
-        border-radius: 5px;
+        border-radius: 0px;
     }
 
     .swk-badge {
@@ -1822,7 +1839,7 @@
 
     .swk-type-swatch {
         height: 26px;
-        border-radius: 3px;
+        border-radius: 0px;
     }
 
     .swk-type-name {
