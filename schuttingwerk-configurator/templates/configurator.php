@@ -41,7 +41,7 @@ $first_mat     = array_key_first( $materials );
 
 <!-- Page Title -->
 <div class="swk-page-title">
-    <h1>Stel je schutting samen in 6 stappen</h1>
+    <h1>Stel je schutting samen in 7 stappen</h1>
     <p>Configureer, bekijk live hoe jouw schutting eruitziet en vraag direct een offerte aan.</p>
 </div>
 
@@ -382,7 +382,7 @@ $first_mat     = array_key_first( $materials );
                 <span class="swk-preview-live">Realtime</span>
             </div>
             <div class="swk-scene" id="swk-scene">
-                <img id="swk-fence-img" alt="Schutting preview">
+                <img id="swk-fence-img" alt="Live preview van uw schutting configuratie" loading="lazy">
                 <div class="swk-scene-label" id="swk-scene-label"><?php echo esc_html( $materials[ $first_mat ]['label'] ?? 'Grenen' ); ?> &mdash; Verticaal</div>
             </div>
             <div class="swk-preview-meta">
@@ -427,6 +427,10 @@ $first_mat     = array_key_first( $materials );
                 <div class="swk-price-per-meter">
                     <span>Prijs per meter</span>
                     <strong id="swk-pv-pm">&euro;0,00 /m</strong>
+                </div>
+                <div class="swk-price-info" aria-label="Prijsinformatie">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 6v4M7 4.5v.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <span>Prijs is opgebouwd uit segmenten van 180 cm. Het aantal segmenten wordt afgerond op basis van uw totale lengte.</span>
                 </div>
                 <button class="swk-cta" id="swk-cta-offerte">Vraag gratis offerte aan &rarr;</button>
                 <div class="swk-cta-sub">Binnen 24 uur reactie &bull; Vrijblijvend</div>

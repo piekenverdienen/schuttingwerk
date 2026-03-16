@@ -64,6 +64,61 @@
         return S.sides.reduce(function (a, b) { return a + b; }, 0);
     }
 
+    /* Debounce helper */
+    function debounce(fn, delay) {
+        var timer;
+        return function () {
+            var ctx = this, args = arguments;
+            clearTimeout(timer);
+            timer = setTimeout(function () { fn.apply(ctx, args); }, delay);
+        };
+    }
+
+    /* Validation helpers */
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
+    }
+
+    function isValidPostcode(pc) {
+        return /^\d{4}\s?[A-Za-z]{2}$/.test(pc.trim());
+    }
+
+    function isValidTelefoon(tel) {
+        var cleaned = tel.replace(/[\s\-\(\)]/g, '');
+        // NL mobiel (06), vast (0xx), of internationaal (+31)
+        return /^(06\d{8}|0[1-9]\d{7,8}|\+31\d{9})$/.test(cleaned);
+    }
+
+    /* ──────────────────────────────────────────
+       LOCALSTORAGE PERSISTENCE
+       ────────────────────────────────────────── */
+    var STORAGE_KEY = 'swk_configurator_state';
+
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+        } catch (e) { /* quota exceeded or private mode */ }
+    }
+
+    function loadState() {
+        try {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (!saved) return false;
+            var parsed = JSON.parse(saved);
+            if (parsed && typeof parsed === 'object' && parsed.type) {
+                Object.keys(parsed).forEach(function (k) {
+                    S[k] = parsed[k];
+                });
+                return true;
+            }
+        } catch (e) { /* corrupt data */ }
+        return false;
+    }
+
+    function clearState() {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* */ }
+    }
+
     function calcTotal() {
         var len = getTotalLen();
         var mat = MATERIALS[S.type];
@@ -287,6 +342,7 @@
         updatePrice();
         updatePhoto();
         if ($('#swk-form-summary')) buildSummary();
+        saveState();
     }
 
     /* ──────────────────────────────────────────
@@ -369,12 +425,13 @@
                     container.appendChild(row);
                 }
 
-                // Bind new inputs
+                // Bind new inputs (with debounce for performance)
+                var debouncedRefresh = debounce(function () { refresh(); }, 150);
                 container.querySelectorAll('input').forEach(function (inp) {
                     inp.addEventListener('input', function () {
                         S.sides[parseInt(inp.getAttribute('data-swk-idx'), 10)] = parseFloat(inp.value) || 0;
                         updateTotalLen();
-                        refresh();
+                        debouncedRefresh();
                     });
                 });
 
@@ -383,12 +440,13 @@
             });
         });
 
-        // Bind initial side inputs
+        // Bind initial side inputs (with debounce)
+        var debouncedRefreshInit = debounce(function () { refresh(); }, 150);
         $$('#swk-sides-container input').forEach(function (inp) {
             inp.addEventListener('input', function () {
                 S.sides[parseInt(inp.getAttribute('data-swk-idx'), 10)] = parseFloat(inp.value) || 0;
                 updateTotalLen();
-                refresh();
+                debouncedRefreshInit();
             });
         });
     }
@@ -469,7 +527,10 @@
                 S.extras[key] = !S.extras[key];
                 el.classList.toggle('swk-on', S.extras[key]);
                 var toggle = el.querySelector('.swk-toggle');
-                if (toggle) toggle.classList.toggle('swk-on', S.extras[key]);
+                if (toggle) {
+                    toggle.classList.toggle('swk-on', S.extras[key]);
+                    toggle.setAttribute('aria-checked', S.extras[key] ? 'true' : 'false');
+                }
                 refresh();
             });
         });
@@ -656,8 +717,18 @@
                 return;
             }
 
-            if (fields.email.indexOf('@') === -1 || fields.email.indexOf('.') === -1) {
+            if (!isValidEmail(fields.email)) {
                 showToast('Vul een geldig e-mailadres in.', true);
+                return;
+            }
+
+            if (!isValidPostcode(fields.postcode)) {
+                showToast('Vul een geldige postcode in (bijv. 1234 AB).', true);
+                return;
+            }
+
+            if (!isValidTelefoon(fields.telefoon)) {
+                showToast('Vul een geldig telefoonnummer in (bijv. 06 12345678).', true);
                 return;
             }
 
@@ -694,6 +765,7 @@
                 });
             })
             .then(function () {
+                clearState();
                 showSuccess(fields.voornaam, fields.email);
             })
             .catch(function (err) {
@@ -771,7 +843,144 @@
     /* ──────────────────────────────────────────
        INIT
        ────────────────────────────────────────── */
+    /* ──────────────────────────────────────────
+       LAZY LOADING
+       ────────────────────────────────────────── */
+    function initLazyLoading() {
+        if (typeof IntersectionObserver === 'undefined') return;
+        var lazyImgs = $$('img[data-swk-lazy]');
+        if (!lazyImgs.length) return;
+
+        var imgObs = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    var img = entry.target;
+                    if (img.dataset.swkLazy) {
+                        img.src = img.dataset.swkLazy;
+                        img.removeAttribute('data-swk-lazy');
+                    }
+                    imgObs.unobserve(img);
+                }
+            });
+        }, { rootMargin: '200px' });
+
+        lazyImgs.forEach(function (img) { imgObs.observe(img); });
+    }
+
+    /* ──────────────────────────────────────────
+       ACCESSIBILITY
+       ────────────────────────────────────────── */
+    function initAccessibility() {
+        // Make selectable cards keyboard-accessible
+        $$('.swk-type-card, .swk-orient-item, .swk-choice, .swk-sit-item, .swk-extra, .swk-placement-option').forEach(function (el) {
+            if (!el.getAttribute('tabindex')) el.setAttribute('tabindex', '0');
+            if (!el.getAttribute('role')) el.setAttribute('role', 'button');
+            el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    el.click();
+                }
+            });
+        });
+
+        // Add aria-labels to toggle switches
+        $$('.swk-toggle').forEach(function (el) {
+            el.setAttribute('role', 'switch');
+            el.setAttribute('aria-checked', el.classList.contains('swk-on') ? 'true' : 'false');
+        });
+
+        // Add aria-labels to info tooltips
+        $$('.swk-type-info').forEach(function (el) {
+            el.setAttribute('aria-label', 'Meer informatie');
+            el.setAttribute('role', 'button');
+            el.setAttribute('tabindex', '0');
+            el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    var tip = el.nextElementSibling;
+                    if (tip && tip.classList.contains('swk-type-tip')) {
+                        tip.classList.toggle('swk-show');
+                    }
+                }
+            });
+        });
+
+        // Scene image alt text
+        var fenceImg = $('#swk-fence-img');
+        if (fenceImg) fenceImg.setAttribute('alt', 'Live preview van uw schutting configuratie');
+    }
+
+    /* ──────────────────────────────────────────
+       STATE RESTORATION
+       ────────────────────────────────────────── */
+    function restoreUI() {
+        // Restore type selection
+        var typeCard = document.querySelector('[data-swk-type="' + S.type + '"]');
+        if (typeCard) {
+            $$('.swk-type-card').forEach(function (e) { e.classList.remove('swk-selected'); });
+            typeCard.classList.add('swk-selected');
+        }
+
+        // Restore orientation
+        var orientCard = document.querySelector('[data-swk-orient="' + S.orient + '"]');
+        if (orientCard) {
+            $$('.swk-orient-item').forEach(function (e) { e.classList.remove('swk-selected'); });
+            orientCard.classList.add('swk-selected');
+        }
+
+        // Restore planken
+        var plankenCard = document.querySelector('[data-swk-planken="' + S.planken + '"]');
+        if (plankenCard) {
+            $$('[data-swk-planken]').forEach(function (e) { e.classList.remove('swk-selected'); });
+            plankenCard.classList.add('swk-selected');
+        }
+
+        // Restore paal
+        var paalCard = document.querySelector('[data-swk-paal="' + S.paal + '"]');
+        if (paalCard) {
+            $$('[data-swk-paal]').forEach(function (e) { e.classList.remove('swk-selected'); });
+            paalCard.classList.add('swk-selected');
+        }
+
+        // Restore placement
+        var placementCard = document.querySelector('[data-swk-placement="' + S.plaatsing + '"]');
+        if (placementCard) {
+            $$('.swk-placement-option').forEach(function (e) { e.classList.remove('swk-selected'); });
+            placementCard.classList.add('swk-selected');
+        }
+
+        // Restore extras toggles
+        Object.keys(S.extras).forEach(function (k) {
+            if (!S.extras[k]) return;
+            var el = document.querySelector('[data-swk-extra="' + k + '"]');
+            if (el) {
+                el.classList.add('swk-on');
+                var toggle = el.querySelector('.swk-toggle');
+                if (toggle) toggle.classList.add('swk-on');
+            }
+        });
+
+        // Restore situatie and side inputs
+        var sitCard = document.querySelector('[data-swk-sit="' + S.situatie + '"]');
+        if (sitCard) {
+            // Click triggers the full rebuild of side inputs
+            sitCard.click();
+            // Fill in side values
+            setTimeout(function () {
+                var inputs = $$('#swk-sides-container input');
+                inputs.forEach(function (inp, i) {
+                    if (S.sides[i]) inp.value = S.sides[i];
+                });
+                updateTotalLen();
+            }, 50);
+        }
+
+        updatePoortExtraDesc();
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
+        var hadSavedState = loadState();
+
         initSwatches();
         initTypeSelection();
         initOrientSelection();
@@ -787,6 +996,13 @@
         initLocationToggle();
         initFormSubmit();
         initObserver();
+        initLazyLoading();
+        initAccessibility();
+
+        if (hadSavedState) {
+            restoreUI();
+        }
+
         refresh();
     });
 })();
