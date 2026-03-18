@@ -404,11 +404,39 @@
     font-weight: 800;
 }
 
+/* Vanaf pricing row */
+.swk-price-vanaf-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3px;
+}
+
+.swk-price-vanaf-label {
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--swk-g5);
+}
+
+.swk-price-vanaf-amount {
+    font-family: var(--swk-fd);
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.swk-price-vanaf-note {
+    font-size: .7rem;
+    color: var(--swk-g4);
+    margin-bottom: 10px;
+    line-height: 1.4;
+    font-style: italic;
+}
+
 .swk-price-vat {
     font-size: .7rem;
     color: var(--swk-g4);
     text-align: right;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
 .swk-price-per-meter {
@@ -1524,6 +1552,8 @@
     .swk-price-vat,
     .swk-price-per-meter,
     .swk-price-sep,
+    .swk-price-vanaf-note,
+    .swk-price-info,
     .swk-cta-sub,
     .swk-trust-row {
         display: none;
@@ -1536,18 +1566,21 @@
         gap: 14px;
     }
 
-    .swk-price-total-row {
+    .swk-price-total-row,
+    .swk-price-vanaf-row {
         flex-direction: column;
         gap: 0;
         margin: 0;
     }
 
-    .swk-price-total-label {
+    .swk-price-total-label,
+    .swk-price-vanaf-label {
         font-size: .7rem;
         color: var(--swk-g5);
     }
 
-    .swk-price-total-amount {
+    .swk-price-total-amount,
+    .swk-price-vanaf-amount {
         font-family: var(--swk-fd);
         font-size: 1.25rem;
         font-weight: 800;
@@ -1979,4 +2012,257 @@
     .swk-form-summary .swk-fs-row .swk-fs-v {
         text-align: left;
     }
+
+    .swk-price-vanaf-amount {
+        font-size: 1.05rem;
+    }
+
+    .swk-price-vanaf-label {
+        font-size: .65rem;
+    }
+}
+
+/* === POORT COUNTER === */
+.swk-poort-counter {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 12px;
+    max-width: 220px;
+}
+
+.swk-counter-btn {
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--swk-g2);
+    background: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--swk-bk);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, border-color .15s;
+    user-select: none;
+}
+
+.swk-counter-btn:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.swk-counter-btn:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.swk-counter-btn:hover {
+    background: var(--swk-g1);
+    border-color: var(--swk-g3);
+}
+
+.swk-counter-input {
+    width: 60px;
+    height: 44px;
+    border: 1.5px solid var(--swk-g2);
+    border-left: none;
+    border-right: none;
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--swk-fb);
+    color: var(--swk-bk);
+    background: white;
+    -moz-appearance: textfield;
+}
+
+.swk-counter-input::-webkit-inner-spin-button,
+.swk-counter-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.swk-counter-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 44px;
+    border: 1.5px solid var(--swk-g2);
+    border-left: none;
+    border-right: none;
+    background: white;
+    opacity: 0.3;
+    transition: opacity .2s;
+}
+
+.swk-poort-hint {
+    font-size: .78rem;
+    color: var(--swk-gr);
+    margin-bottom: 16px;
+    line-height: 1.45;
+}
+
+/* === POORT CONFIG LIST === */
+.swk-poort-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.swk-poort-config-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.swk-poort-config-label {
+    font-weight: 700;
+    font-size: .88rem;
+}
+
+.swk-poort-config-fields {
+    display: flex;
+    gap: 10px;
+}
+
+.swk-poort-select {
+    flex: 1;
+    height: 42px;
+    padding: 0 12px;
+    border: 1.5px solid var(--swk-g2);
+    border-radius: 4px;
+    font-size: .85rem;
+    font-family: var(--swk-fb);
+    color: var(--swk-bk);
+    background: white;
+    cursor: pointer;
+    appearance: auto;
+}
+
+.swk-poort-select:focus {
+    border-color: var(--swk-gr);
+    outline: none;
+}
+
+/* === TOGGLE BUTTONS (Ja/Nee) === */
+.swk-toggle-btns {
+    display: flex;
+    gap: 0;
+    margin-top: 4px;
+}
+
+.swk-toggle-btn {
+    padding: 8px 22px;
+    border: 1.5px solid var(--swk-g2);
+    background: white;
+    font-size: .85rem;
+    font-family: var(--swk-fb);
+    color: var(--swk-g5);
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.swk-toggle-btn:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.swk-toggle-btn:last-child {
+    border-radius: 0 4px 4px 0;
+    border-left: none;
+}
+
+.swk-toggle-btn-active {
+    background: var(--swk-bk);
+    color: white;
+    border-color: var(--swk-bk);
+}
+
+.swk-toggle-btn-active + .swk-toggle-btn {
+    border-left: 1.5px solid var(--swk-g2);
+}
+
+/* === FORM HINTS === */
+.swk-form-hint {
+    font-size: .78rem;
+    color: var(--swk-gr);
+    margin-bottom: 8px;
+    line-height: 1.45;
+}
+
+.swk-form-label-bold {
+    font-weight: 700;
+    font-size: .88rem;
+}
+
+/* === FILE UPLOAD === */
+.swk-upload-area {
+    border: 2px dashed var(--swk-g2);
+    border-radius: 6px;
+    padding: 28px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    background: white;
+}
+
+.swk-upload-area:hover,
+.swk-upload-dragover {
+    border-color: var(--swk-gr);
+    background: var(--swk-gbg);
+}
+
+.swk-upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.swk-upload-text {
+    font-size: .85rem;
+    color: var(--swk-g6);
+}
+
+.swk-upload-sub {
+    font-size: .72rem;
+    color: var(--swk-gr);
+}
+
+.swk-upload-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.swk-upload-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--swk-g1);
+    border-radius: 4px;
+    font-size: .8rem;
+}
+
+.swk-upload-filename {
+    color: var(--swk-g6);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+}
+
+.swk-upload-remove {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    color: var(--swk-g4);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.swk-upload-remove:hover {
+    color: #c00;
 }

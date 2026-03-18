@@ -176,10 +176,14 @@ var swkData = {
         </div>
         <div class="swk-step-tab" data-swk-goto="7">
             <span class="swk-step-num">7</span>
-            <span class="swk-step-label">Extra's</span>
+            <span class="swk-step-label">Poorten</span>
         </div>
         <div class="swk-step-tab" data-swk-goto="8">
             <span class="swk-step-num">8</span>
+            <span class="swk-step-label">Extra's</span>
+        </div>
+        <div class="swk-step-tab" data-swk-goto="9">
+            <span class="swk-step-num">9</span>
             <span class="swk-step-label">Offerte</span>
         </div>
     </div>
@@ -463,8 +467,35 @@ var swkData = {
             </div>
         </section>
 
-        <!-- STEP 7: Extra opties -->
+        <!-- STEP 7: Poorten -->
         <section class="swk-step-card" id="swk-s7">
+            <div class="swk-card-header">
+                <div class="swk-card-icon">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2" y="3" width="14" height="12" rx="1.5" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M9 3v12" stroke="currentColor" stroke-width="1.2"/><circle cx="7" cy="9" r=".8" fill="currentColor"/><circle cx="11" cy="9" r=".8" fill="currentColor"/></svg>
+                </div>
+                <div>
+                    <div class="swk-card-title">Aantal poorten</div>
+                    <div class="swk-card-desc">Looppoorten toevoegen aan uw schutting</div>
+                </div>
+            </div>
+            <div class="swk-card-body">
+                <div class="swk-poort-counter">
+                    <button class="swk-counter-btn" id="swk-poort-minus" type="button">&minus;</button>
+                    <input class="swk-counter-input" id="swk-poort-count" type="number" min="0" max="10" value="0" readonly>
+                    <span class="swk-counter-check" id="swk-poort-check">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-6" stroke="#4A7C59" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <button class="swk-counter-btn" id="swk-poort-plus" type="button">+</button>
+                </div>
+                <div class="swk-poort-hint">De poort wordt uitgevoerd in dezelfde houtsoort als de rest van de schutting.</div>
+                <div id="swk-poort-config-list" class="swk-poort-config-list">
+                    <!-- Dynamisch gevuld door JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 8: Extra opties -->
+        <section class="swk-step-card" id="swk-s7b">
             <div class="swk-card-header">
                 <div class="swk-card-icon">
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.4" fill="none"/><path d="M9 5v8M5 9h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
@@ -476,20 +507,6 @@ var swkData = {
             </div>
             <div class="swk-card-body">
                 <div class="swk-extras-list">
-                    <!-- Poort -->
-                    <div class="swk-extra" data-swk-extra="poort">
-                        <div class="swk-extra-left">
-                            <div class="swk-extra-icon">&#128682;</div>
-                            <div>
-                                <div class="swk-extra-name">Looppoort toevoegen</div>
-                                <div class="swk-extra-desc">Kies een poortmaat</div>
-                            </div>
-                        </div>
-                        <div class="swk-extra-right">
-                            <div class="swk-extra-price">vanaf &euro;329,95</div>
-                            <div class="swk-toggle"></div>
-                        </div>
-                    </div>
                     <!-- Onderplaat -->
                     <div class="swk-extra" data-swk-extra="onderplaat">
                         <div class="swk-extra-left">
@@ -500,7 +517,7 @@ var swkData = {
                             </div>
                         </div>
                         <div class="swk-extra-right">
-                            <div class="swk-extra-price">+ &euro;8,50 /m</div>
+                            <div class="swk-extra-price">vanaf &euro;8,50 /m</div>
                             <div class="swk-toggle"></div>
                         </div>
                     </div>
@@ -514,7 +531,7 @@ var swkData = {
                             </div>
                         </div>
                         <div class="swk-extra-right">
-                            <div class="swk-extra-price">+ &euro;750</div>
+                            <div class="swk-extra-price">vanaf &euro;750</div>
                             <div class="swk-toggle"></div>
                         </div>
                     </div>
@@ -522,8 +539,8 @@ var swkData = {
             </div>
         </section>
 
-        <!-- STEP 8: Offerte aanvragen (hidden by default) -->
-        <section class="swk-step-card" id="swk-s8" style="display:none;opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease">
+        <!-- STEP 9: Offerte aanvragen (hidden by default) -->
+        <section class="swk-step-card" id="swk-s9" style="display:none;opacity:0;transform:translateY(20px);transition:opacity .4s ease,transform .4s ease">
             <div class="swk-card-header">
                 <div class="swk-card-icon">
                     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 3h12v12H3z" stroke="currentColor" stroke-width="1.4" fill="none" rx="1.5"/><path d="M6 7h6M6 10h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
@@ -582,6 +599,31 @@ var swkData = {
                         <input class="swk-form-input" id="swk-f-locatie-adres" type="text" placeholder="Straat, huisnummer, postcode, plaats">
                     </div>
                     <div class="swk-form-field">
+                        <label class="swk-form-label swk-form-label-bold">Meer dan 25 cm hoogteverschil?</label>
+                        <div class="swk-toggle-btns" id="swk-hoogteverschil">
+                            <button type="button" class="swk-toggle-btn" data-value="ja">Ja</button>
+                            <button type="button" class="swk-toggle-btn swk-toggle-btn-active" data-value="nee">Nee</button>
+                        </div>
+                    </div>
+                    <div class="swk-form-field">
+                        <label class="swk-form-label swk-form-label-bold" for="swk-f-situatie">Situatie omschrijving</label>
+                        <div class="swk-form-hint">Opmerkingen in dit veld zijn enkel om ons extra informatie te geven en wordt <strong>niet</strong> meegenomen in de offerte.</div>
+                        <textarea class="swk-form-input swk-form-textarea" id="swk-f-situatie" rows="4" placeholder="Beschrijf uw situatie..."></textarea>
+                    </div>
+                    <div class="swk-form-field">
+                        <label class="swk-form-label swk-form-label-bold">Foto's / plattegrond</label>
+                        <div class="swk-form-hint">Upload foto of tekening om de situatie te verduidelijken.</div>
+                        <div class="swk-upload-area" id="swk-upload-area">
+                            <div class="swk-upload-content">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="#A3A3A1" stroke-width="2" stroke-linecap="round"/></svg>
+                                <div class="swk-upload-text"><strong>Blader door bestanden</strong> of drag and drop</div>
+                                <div class="swk-upload-sub">Maximaal 3 afbeeldingen/PDFs</div>
+                            </div>
+                            <input type="file" id="swk-f-fotos" multiple accept="image/*,.pdf" style="display:none">
+                        </div>
+                        <div class="swk-upload-preview" id="swk-upload-preview"></div>
+                    </div>
+                    <div class="swk-form-field">
                         <label class="swk-form-label" for="swk-f-opmerkingen">Opmerkingen</label>
                         <textarea class="swk-form-input swk-form-textarea" id="swk-f-opmerkingen" rows="3" placeholder="Eventuele opmerkingen of vragen..."></textarea>
                     </div>
@@ -612,47 +654,44 @@ var swkData = {
         </div>
 
         <div class="swk-price-card">
-            <div class="swk-price-header">Uw prijsoverzicht</div>
+            <div class="swk-price-header">Prijsindicatie</div>
             <div class="swk-price-body">
                 <div class="swk-price-lines">
                     <div class="swk-price-line">
                         <span class="swk-price-line-label" id="swk-pl-type">Grenen</span>
-                        <span class="swk-price-line-value" id="swk-pv-base">&euro;0,00</span>
+                        <span class="swk-price-line-value" id="swk-pv-base">vanaf &euro;43 /m</span>
                     </div>
                     <div class="swk-price-line" id="swk-pl-onderplaat" style="display:none">
                         <span class="swk-price-line-label">Betonnen onderplaat</span>
-                        <span class="swk-price-line-value" id="swk-pv-onderplaat">&euro;0,00</span>
-                    </div>
-                    <div class="swk-price-line" id="swk-pl-paal" style="display:none">
-                        <span class="swk-price-line-label" id="swk-pl-paal-label">Betonpalen upgrade</span>
-                        <span class="swk-price-line-value" id="swk-pv-paal">&euro;0,00</span>
-                    </div>
-                    <div class="swk-price-line" id="swk-pl-plaatsing" style="display:none">
-                        <span class="swk-price-line-label">Snelbeton mortel</span>
-                        <span class="swk-price-line-value" id="swk-pv-plaatsing">&euro;0,00</span>
+                        <span class="swk-price-line-value" id="swk-pv-onderplaat">vanaf &euro;8,50 /m</span>
                     </div>
                     <div class="swk-price-line" id="swk-pl-poort" style="display:none">
                         <span class="swk-price-line-label" id="swk-pl-poort-label">Looppoort</span>
-                        <span class="swk-price-line-value" id="swk-pv-poort">&euro;0,00</span>
+                        <span class="swk-price-line-value" id="swk-pv-poort">vanaf &euro;329,95</span>
+                    </div>
+                    <div class="swk-price-line" id="swk-pl-plaatsing" style="display:none">
+                        <span class="swk-price-line-label">Snelbeton mortel</span>
+                        <span class="swk-price-line-value" id="swk-pv-plaatsing">vanaf &euro;14,50 /seg.</span>
                     </div>
                     <div class="swk-price-line" id="swk-pl-montage" style="display:none">
                         <span class="swk-price-line-label">Montage</span>
-                        <span class="swk-price-line-value">&euro;750,00</span>
+                        <span class="swk-price-line-value">vanaf &euro;750</span>
                     </div>
                 </div>
                 <hr class="swk-price-sep">
-                <div class="swk-price-total-row">
-                    <span class="swk-price-total-label">Totaalprijs</span>
-                    <span class="swk-price-total-amount" id="swk-pv-total">&euro;0,00</span>
+                <div class="swk-price-vanaf-row">
+                    <span class="swk-price-vanaf-label">Vanaf</span>
+                    <span class="swk-price-vanaf-amount" id="swk-pv-total">&euro;0,00</span>
                 </div>
                 <div class="swk-price-vat">Inclusief 21% BTW</div>
+                <div class="swk-price-vanaf-note">De uiteindelijke prijs wordt op maat berekend en kan per klant verschillen.</div>
                 <div class="swk-price-per-meter">
-                    <span>Prijs per meter</span>
+                    <span>Vanaf per meter</span>
                     <strong id="swk-pv-pm">&euro;0,00 /m</strong>
                 </div>
                 <div class="swk-price-info" aria-label="Prijsinformatie">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 6v4M7 4.5v.01" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-                    <span>Prijs is opgebouwd uit segmenten van 180 cm. Het aantal segmenten wordt afgerond op basis van uw totale lengte.</span>
+                    <span>Dit zijn indicatieprijzen. Vraag een offerte aan voor uw exacte prijs op maat.</span>
                 </div>
                 <button class="swk-cta" id="swk-cta-offerte">Vraag gratis offerte aan &rarr;</button>
                 <div class="swk-cta-sub">Binnen 24 uur reactie &bull; Vrijblijvend</div>
@@ -672,21 +711,6 @@ var swkData = {
 
 </div><!-- /.swk-wrap -->
 
-<!-- Poort selectie modal -->
-<div class="swk-modal-overlay" id="swk-poort-modal">
-    <div class="swk-modal">
-        <div class="swk-modal-header">
-            <span>Wil je een poort toevoegen?</span>
-            <button class="swk-modal-close" id="swk-poort-modal-close">&times;</button>
-        </div>
-        <div class="swk-modal-body">
-            <h3 class="swk-poort-title">POORT UITZOEKEN</h3>
-            <div class="swk-poort-grid" id="swk-poort-grid">
-                <!-- Dynamisch gevuld door JS -->
-            </div>
-        </div>
-    </div>
-</div>
 
 <script src="assets/js/configurator.js"></script>
 </body>

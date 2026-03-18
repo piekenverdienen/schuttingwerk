@@ -19,6 +19,9 @@
     var REST_URL  = CFG.restUrl    || '';
     var NONCE     = CFG.nonce      || '';
 
+    /* Available gate widths (cm) */
+    var POORT_BREEDTES = [90, 100, 110, 120, 130, 140, 150];
+
     /* Situation helpers */
     var SIT_SIDES  = { '1': 1, '2': 2, '3': 3, 't': 3, '4': 4, '5': 5, '6': 6, '7': 7, '4g': 4, '2p': 2 };
     var SIT_LABELS = {
@@ -45,13 +48,19 @@
         sides:    [0],
         paal:     'grijs',
         plaatsing: 'geen',
-        extras:   {}
+        extras:   {},
+        poorten:  [],
+        hoogteverschil: 'nee'
     };
 
-    // Initialize extras state
+    // Initialize extras state (without poort — poort is now separate)
     Object.keys(EXTRAS).forEach(function (k) {
+        if (k === 'poort') return;
         S.extras[k] = false;
     });
+
+    // Uploaded files (not persisted to localStorage)
+    var uploadedFiles = [];
 
     /* ──────────────────────────────────────────
        HELPERS
@@ -64,7 +73,6 @@
         return S.sides.reduce(function (a, b) { return a + b; }, 0);
     }
 
-    /* Debounce helper */
     function debounce(fn, delay) {
         var timer;
         return function () {
@@ -74,7 +82,6 @@
         };
     }
 
-    /* Validation helpers */
     function isValidEmail(email) {
         return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
     }
@@ -85,7 +92,6 @@
 
     function isValidTelefoon(tel) {
         var cleaned = tel.replace(/[\s\-\(\)]/g, '');
-        // NL mobiel (06), vast (0xx), of internationaal (+31)
         return /^(06\d{8}|0[1-9]\d{7,8}|\+31\d{9})$/.test(cleaned);
     }
 
@@ -109,6 +115,8 @@
                 Object.keys(parsed).forEach(function (k) {
                     S[k] = parsed[k];
                 });
+                // Ensure poorten is an array
+                if (!Array.isArray(S.poorten)) S.poorten = [];
                 return true;
             }
         } catch (e) { /* corrupt data */ }
@@ -128,17 +136,21 @@
 
         Object.keys(S.extras).forEach(function (k) {
             if (!S.extras[k]) return;
-            // Poort is stored as object { index, label, price }
-            if (k === 'poort' && typeof S.extras.poort === 'object') {
-                t += S.extras.poort.price;
-                return;
-            }
             var ex = EXTRAS[k];
             if (!ex) return;
             if (ex.unit === 'per_meter') {
                 t += ex.price * len;
             } else {
                 t += ex.price;
+            }
+        });
+
+        // Add poorten prices
+        var gates = POORTEN[S.type] || POORTEN.grenen || [];
+        S.poorten.forEach(function (p) {
+            var widthIdx = POORT_BREEDTES.indexOf(p.breedte);
+            if (widthIdx >= 0 && gates[widthIdx]) {
+                t += gates[widthIdx].price;
             }
         });
 
@@ -164,7 +176,6 @@
         if (!el) return;
         el.textContent = msg;
         el.className = 'swk-toast' + (isError ? ' swk-toast-error' : '');
-        // Force reflow
         void el.offsetWidth;
         el.classList.add('swk-toast-show');
         setTimeout(function () {
@@ -173,89 +184,70 @@
     }
 
     /* ──────────────────────────────────────────
-       PRICE UPDATE
+       PRICE UPDATE (vanaf prijzen)
        ────────────────────────────────────────── */
     function updatePrice() {
         var len = getTotalLen();
         var mat = MATERIALS[S.type];
         if (!mat) return;
 
-        // Material type label + base price
+        // Material type label + base "vanaf" price
         var baseEl = $('#swk-pl-type');
         if (baseEl) baseEl.textContent = mat.label;
         var pvBase = $('#swk-pv-base');
-        if (pvBase) pvBase.textContent = fmt(mat.price * len);
+        if (pvBase) pvBase.textContent = 'vanaf ' + fmt(mat.price) + ' /m';
 
         // Onderplaat
         var onderplaat = S.extras.onderplaat && EXTRAS.onderplaat;
         var plOnder = $('#swk-pl-onderplaat');
         if (plOnder) plOnder.style.display = onderplaat ? 'flex' : 'none';
-        if (onderplaat) {
-            var pvOnder = $('#swk-pv-onderplaat');
-            if (pvOnder) pvOnder.textContent = fmt(EXTRAS.onderplaat.price * len);
-        }
-
-        // Paal upgrade
-        var paalCost = (PAAL_EX[S.paal] || 0) * len;
-        var plPaal = $('#swk-pl-paal');
-        if (plPaal) plPaal.style.display = paalCost > 0 ? 'flex' : 'none';
-        if (paalCost > 0) {
-            var plPaalLabel = $('#swk-pl-paal-label');
-            if (plPaalLabel) plPaalLabel.textContent = 'Betonpalen ' + S.paal;
-            var pvPaal = $('#swk-pv-paal');
-            if (pvPaal) pvPaal.textContent = fmt(paalCost);
-        }
 
         // Plaatsing (snelbeton mortel)
-        var mortelSeg = Math.max(0, Math.round(len / 1.80));
         var plPlaatsing = $('#swk-pl-plaatsing');
         if (plPlaatsing) plPlaatsing.style.display = S.plaatsing === 'mortel' ? 'flex' : 'none';
-        if (S.plaatsing === 'mortel') {
-            var pvPlaatsing = $('#swk-pv-plaatsing');
-            if (pvPlaatsing) pvPlaatsing.textContent = fmt(mortelSeg * 14.50);
-        }
 
         // Update mortel price display in placement option
         var mortelPriceEl = $('#swk-mortel-price');
         if (mortelPriceEl) {
+            var mortelSeg = Math.max(0, Math.round(len / 1.80));
             if (len > 0) {
-                mortelPriceEl.textContent = fmt(mortelSeg * 14.50) + ' (' + mortelSeg + ' seg.)';
+                mortelPriceEl.textContent = 'vanaf ' + fmt(mortelSeg * 14.50) + ' (' + mortelSeg + ' seg.)';
             } else {
-                mortelPriceEl.textContent = '\u20AC14,50 /segment';
+                mortelPriceEl.textContent = 'vanaf \u20AC14,50 /segment';
             }
         }
 
         // Poort
-        var poortSelected = S.extras.poort && typeof S.extras.poort === 'object';
+        var hasPoorten = S.poorten.length > 0;
         var plPoort = $('#swk-pl-poort');
-        if (plPoort) plPoort.style.display = poortSelected ? 'flex' : 'none';
-        if (poortSelected) {
-            var pvPoort = $('#swk-pv-poort');
-            if (pvPoort) pvPoort.textContent = fmt(S.extras.poort.price);
+        if (plPoort) plPoort.style.display = hasPoorten ? 'flex' : 'none';
+        if (hasPoorten) {
             var plPoortLabel = $('#swk-pl-poort-label');
-            if (plPoortLabel) plPoortLabel.textContent = S.extras.poort.label;
+            if (plPoortLabel) plPoortLabel.textContent = S.poorten.length + 'x Looppoort';
+            var pvPoort = $('#swk-pv-poort');
+            if (pvPoort) pvPoort.textContent = 'vanaf \u20AC329,95 /st.';
         }
 
         // Montage
         var plMontage = $('#swk-pl-montage');
         if (plMontage) plMontage.style.display = S.extras.montage ? 'flex' : 'none';
 
-        // Total
+        // Total (vanaf)
         var tot = calcTotal();
         var pvTotal = $('#swk-pv-total');
         if (pvTotal) pvTotal.textContent = fmt(tot);
 
-        // Per meter
+        // Per meter (vanaf)
         var pvPm = $('#swk-pv-pm');
-        if (pvPm) pvPm.textContent = len > 0 ? fmt(tot / len) + ' /m' : '\u20AC0,00 /m';
+        if (pvPm) pvPm.textContent = len > 0 ? 'vanaf ' + fmt(tot / len) + ' /m' : '\u20AC0,00 /m';
 
         // Meta stats
         var seg = Math.max(0, Math.round(len / 1.80));
         var palen;
         if (S.situatie === '4g') {
-            palen = seg; // gesloten: geen extra eindpaal
+            palen = seg;
         } else if (S.situatie === '2p') {
-            palen = seg > 0 ? seg + 2 : 0; // twee losse zijdes
+            palen = seg > 0 ? seg + 2 : 0;
         } else {
             palen = seg > 0 ? seg + 1 : 0;
         }
@@ -318,19 +310,24 @@
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Betonpalen</span><span class="swk-fs-v">' + S.paal.charAt(0).toUpperCase() + S.paal.slice(1) + '</span></div>';
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Plaatsing</span><span class="swk-fs-v">' + (S.plaatsing === 'mortel' ? 'Snelbeton mortel' : 'Lever niets mee') + '</span></div>';
 
+        // Poorten
+        if (S.poorten.length > 0) {
+            S.poorten.forEach(function (p, i) {
+                html += '<div class="swk-fs-row"><span class="swk-fs-l">Poort ' + (i + 1) + '</span><span class="swk-fs-v">Zijde ' + p.zijde + ' &mdash; ' + p.breedte + ' cm</span></div>';
+            });
+        }
+
         Object.keys(S.extras).forEach(function (k) {
             if (!S.extras[k]) return;
-            if (k === 'poort' && typeof S.extras.poort === 'object') {
-                html += '<div class="swk-fs-row"><span class="swk-fs-l">Looppoort</span><span class="swk-fs-v">' + S.extras.poort.label + ' (' + fmt(S.extras.poort.price) + ')</span></div>';
-                return;
-            }
             if (EXTRAS[k]) {
                 html += '<div class="swk-fs-row"><span class="swk-fs-l">' + EXTRAS[k].label + '</span><span class="swk-fs-v">Ja</span></div>';
             }
         });
 
+        html += '<div class="swk-fs-row"><span class="swk-fs-l">Hoogteverschil &gt;25cm</span><span class="swk-fs-v">' + (S.hoogteverschil === 'ja' ? 'Ja' : 'Nee') + '</span></div>';
+
         html += '<hr class="swk-fs-divider">';
-        html += '<div class="swk-fs-row"><span class="swk-fs-l"><strong>Indicatie totaalprijs</strong></span><span class="swk-fs-v"><strong>' + fmt(tot) + '</strong></span></div>';
+        html += '<div class="swk-fs-row"><span class="swk-fs-l"><strong>Indicatie vanaf prijs</strong></span><span class="swk-fs-v"><strong>vanaf ' + fmt(tot) + '</strong></span></div>';
 
         el.innerHTML = html;
     }
@@ -356,19 +353,6 @@
                 $$('.swk-type-card').forEach(function (e) { e.classList.remove('swk-selected'); });
                 el.classList.add('swk-selected');
                 S.type = el.getAttribute('data-swk-type');
-
-                // Reset poort selection when switching material type
-                if (S.extras.poort) {
-                    S.extras.poort = false;
-                    var poortEl = document.querySelector('[data-swk-extra="poort"]');
-                    if (poortEl) {
-                        poortEl.classList.remove('swk-on');
-                        var toggle = poortEl.querySelector('.swk-toggle');
-                        if (toggle) toggle.classList.remove('swk-on');
-                    }
-                    updatePoortExtraDesc();
-                }
-
                 refresh();
             });
         });
@@ -425,7 +409,6 @@
                     container.appendChild(row);
                 }
 
-                // Bind new inputs (with debounce for performance)
                 var debouncedRefresh = debounce(function () { refresh(); }, 150);
                 container.querySelectorAll('input').forEach(function (inp) {
                     inp.addEventListener('input', function () {
@@ -435,12 +418,15 @@
                     });
                 });
 
+                // Update poort side options when situation changes
+                renderPoortConfig();
+
                 updateTotalLen();
                 refresh();
             });
         });
 
-        // Bind initial side inputs (with debounce)
+        // Bind initial side inputs
         var debouncedRefreshInit = debounce(function () { refresh(); }, 150);
         $$('#swk-sides-container input').forEach(function (inp) {
             inp.addEventListener('input', function () {
@@ -451,7 +437,6 @@
         });
     }
 
-    // Toggle "meer opties" voor extra situaties
     function initSitToggle() {
         var toggle = $('#swk-sit-toggle');
         var extra = $('#swk-sit-extra');
@@ -461,7 +446,6 @@
             extra.style.display = open ? 'none' : '';
             toggle.innerHTML = open ? 'Meer opties &#9662;' : 'Minder opties &#9652;';
 
-            // Als we inklappen en de huidige selectie zit bij de extra opties, reset naar 1 zijde
             if (open) {
                 var selected = extra.querySelector('.swk-sit-item.swk-selected');
                 if (selected) {
@@ -489,40 +473,112 @@
         });
     }
 
-    // Step 5b: Plaatsing selection (snelbeton mortel / lever niets mee)
+    // Step 6: Plaatsing selection
     function initPlacement() {
         $$('.swk-placement-option').forEach(function (el) {
             el.addEventListener('click', function () {
                 $$('.swk-placement-option').forEach(function (e) { e.classList.remove('swk-selected'); });
                 el.classList.add('swk-selected');
                 S.plaatsing = el.getAttribute('data-swk-placement');
-
                 refresh();
             });
         });
     }
 
-    // Step 6: Extras toggles
+    /* ──────────────────────────────────────────
+       POORT COUNTER + INLINE CONFIG
+       ────────────────────────────────────────── */
+    function getAvailableSides() {
+        return SIT_LABELS[S.situatie] || ['A'];
+    }
+
+    function renderPoortConfig() {
+        var container = $('#swk-poort-config-list');
+        if (!container) return;
+
+        var sides = getAvailableSides();
+        container.innerHTML = '';
+
+        S.poorten.forEach(function (p, i) {
+            var row = document.createElement('div');
+            row.className = 'swk-poort-config-row';
+
+            var sideOptions = sides.map(function (s) {
+                return '<option value="' + s + '"' + (p.zijde === s ? ' selected' : '') + '>Zijde ' + s + '</option>';
+            }).join('');
+
+            var breedteOptions = POORT_BREEDTES.map(function (b) {
+                return '<option value="' + b + '"' + (p.breedte === b ? ' selected' : '') + '>' + b + ' cm</option>';
+            }).join('');
+
+            row.innerHTML =
+                '<div class="swk-poort-config-label">Poort ' + (i + 1) + '</div>' +
+                '<div class="swk-poort-config-fields">' +
+                '<select class="swk-poort-select" data-poort-idx="' + i + '" data-poort-field="zijde">' + sideOptions + '</select>' +
+                '<select class="swk-poort-select" data-poort-idx="' + i + '" data-poort-field="breedte">' + breedteOptions + '</select>' +
+                '</div>';
+            container.appendChild(row);
+        });
+
+        // Bind change events
+        container.querySelectorAll('.swk-poort-select').forEach(function (sel) {
+            sel.addEventListener('change', function () {
+                var idx = parseInt(sel.getAttribute('data-poort-idx'), 10);
+                var field = sel.getAttribute('data-poort-field');
+                if (field === 'zijde') {
+                    S.poorten[idx].zijde = sel.value;
+                } else if (field === 'breedte') {
+                    S.poorten[idx].breedte = parseInt(sel.value, 10);
+                }
+                refresh();
+            });
+        });
+
+        // Update counter display
+        var countInput = $('#swk-poort-count');
+        if (countInput) countInput.value = S.poorten.length;
+
+        // Update check visibility
+        var check = $('#swk-poort-check');
+        if (check) check.style.opacity = S.poorten.length > 0 ? '1' : '0.3';
+    }
+
+    function initPoortCounter() {
+        var minusBtn = $('#swk-poort-minus');
+        var plusBtn = $('#swk-poort-plus');
+
+        if (minusBtn) {
+            minusBtn.addEventListener('click', function () {
+                if (S.poorten.length > 0) {
+                    S.poorten.pop();
+                    renderPoortConfig();
+                    refresh();
+                }
+            });
+        }
+
+        if (plusBtn) {
+            plusBtn.addEventListener('click', function () {
+                if (S.poorten.length < 10) {
+                    var sides = getAvailableSides();
+                    S.poorten.push({
+                        zijde: sides[0],
+                        breedte: 100
+                    });
+                    renderPoortConfig();
+                    refresh();
+                }
+            });
+        }
+
+        renderPoortConfig();
+    }
+
+    // Step 8: Extras toggles (onderplaat, montage)
     function initExtras() {
         $$('.swk-extra').forEach(function (el) {
             el.addEventListener('click', function () {
                 var key = el.getAttribute('data-swk-extra');
-
-                if (key === 'poort') {
-                    if (S.extras.poort) {
-                        // Deselect poort
-                        S.extras.poort = false;
-                        el.classList.remove('swk-on');
-                        var toggle = el.querySelector('.swk-toggle');
-                        if (toggle) toggle.classList.remove('swk-on');
-                        updatePoortExtraDesc();
-                        refresh();
-                    } else {
-                        // Open poort modal
-                        openPoortModal();
-                    }
-                    return;
-                }
 
                 S.extras[key] = !S.extras[key];
                 el.classList.toggle('swk-on', S.extras[key]);
@@ -536,96 +592,12 @@
         });
     }
 
-    // Update poort extra description to show selected gate
-    function updatePoortExtraDesc() {
-        var el = document.querySelector('[data-swk-extra="poort"]');
-        if (!el) return;
-        var descEl = el.querySelector('.swk-extra-desc');
-        var priceEl = el.querySelector('.swk-extra-price');
-        if (S.extras.poort && typeof S.extras.poort === 'object') {
-            if (descEl) descEl.textContent = S.extras.poort.label;
-            if (priceEl) priceEl.textContent = '+ ' + fmt(S.extras.poort.price);
-        } else {
-            if (descEl) descEl.textContent = 'Kies een poortmaat';
-            if (priceEl) priceEl.textContent = 'vanaf \u20AC329,95';
-        }
-    }
-
-    // Poort modal
-    function openPoortModal() {
-        var modal = $('#swk-poort-modal');
-        var grid  = $('#swk-poort-grid');
-        if (!modal || !grid) return;
-
-        var gates = POORTEN[S.type] || POORTEN.grenen || [];
-        var html = '';
-
-        gates.forEach(function (gate, i) {
-            var selected = S.extras.poort && typeof S.extras.poort === 'object' && S.extras.poort.index === i;
-            html += '<div class="swk-poort-card' + (selected ? ' swk-selected' : '') + '" data-swk-poort-idx="' + i + '">';
-            html += '<img class="swk-poort-card-img" src="' + gate.image + '" alt="' + gate.label + '" onerror="this.style.background=\'#e8e8e4\';this.alt=\'Afbeelding niet beschikbaar\'">';
-            html += '<div class="swk-poort-card-body">';
-            html += '<div class="swk-poort-card-label">' + gate.label + '</div>';
-            html += '<div class="swk-poort-card-price">' + fmt(gate.price) + '</div>';
-            html += '</div></div>';
-        });
-
-        grid.innerHTML = html;
-
-        // Bind click events on gate cards
-        grid.querySelectorAll('.swk-poort-card').forEach(function (card) {
-            card.addEventListener('click', function () {
-                var idx = parseInt(card.getAttribute('data-swk-poort-idx'), 10);
-                var gate = gates[idx];
-                if (!gate) return;
-
-                S.extras.poort = { index: idx, label: gate.label, price: gate.price };
-
-                // Update the toggle visual
-                var poortEl = document.querySelector('[data-swk-extra="poort"]');
-                if (poortEl) {
-                    poortEl.classList.add('swk-on');
-                    var toggle = poortEl.querySelector('.swk-toggle');
-                    if (toggle) toggle.classList.add('swk-on');
-                }
-
-                updatePoortExtraDesc();
-                closePoortModal();
-                refresh();
-            });
-        });
-
-        modal.classList.add('swk-modal-open');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closePoortModal() {
-        var modal = $('#swk-poort-modal');
-        if (modal) modal.classList.remove('swk-modal-open');
-        document.body.style.overflow = '';
-    }
-
-    function initPoortModal() {
-        var closeBtn = $('#swk-poort-modal-close');
-        if (closeBtn) closeBtn.addEventListener('click', closePoortModal);
-
-        var overlay = $('#swk-poort-modal');
-        if (overlay) {
-            overlay.addEventListener('click', function (e) {
-                if (e.target === overlay) closePoortModal();
-            });
-        }
-
-        // Set initial poort description
-        updatePoortExtraDesc();
-    }
-
     // Progress bar navigation
     function initProgressBar() {
         $$('.swk-step-tab').forEach(function (el) {
             el.addEventListener('click', function () {
                 var n = parseInt(el.getAttribute('data-swk-goto'), 10);
-                if (n === 7) {
+                if (n === 9) {
                     openForm();
                     return;
                 }
@@ -644,25 +616,29 @@
             c.classList.toggle('swk-active-card', i + 1 === n);
         });
         var target = document.getElementById('swk-s' + n);
+        if (!target) {
+            // swk-s7b is step 8
+            if (n === 8) target = document.getElementById('swk-s7b');
+        }
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Open form (step 7)
+    // Open form (step 9)
     function openForm() {
-        var s7 = $('#swk-s8');
-        if (!s7) return;
+        var s9 = $('#swk-s9');
+        if (!s9) return;
         buildSummary();
-        s7.style.display = '';
+        s9.style.display = '';
         requestAnimationFrame(function () {
             requestAnimationFrame(function () {
-                s7.style.opacity = '1';
-                s7.style.transform = 'translateY(0)';
+                s9.style.opacity = '1';
+                s9.style.transform = 'translateY(0)';
             });
         });
         setTimeout(function () {
-            s7.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            s9.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 50);
-        goToStep(7);
+        goToStep(9);
     }
 
     // CTA buttons
@@ -683,6 +659,104 @@
     }
 
     /* ──────────────────────────────────────────
+       HOOGTEVERSCHIL TOGGLE
+       ────────────────────────────────────────── */
+    function initHoogteverschil() {
+        var container = $('#swk-hoogteverschil');
+        if (!container) return;
+
+        container.querySelectorAll('.swk-toggle-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                container.querySelectorAll('.swk-toggle-btn').forEach(function (b) {
+                    b.classList.remove('swk-toggle-btn-active');
+                });
+                btn.classList.add('swk-toggle-btn-active');
+                S.hoogteverschil = btn.getAttribute('data-value');
+                saveState();
+            });
+        });
+    }
+
+    /* ──────────────────────────────────────────
+       FILE UPLOAD
+       ────────────────────────────────────────── */
+    function initFileUpload() {
+        var area = $('#swk-upload-area');
+        var input = $('#swk-f-fotos');
+        var preview = $('#swk-upload-preview');
+        if (!area || !input || !preview) return;
+
+        area.addEventListener('click', function () {
+            input.click();
+        });
+
+        area.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            area.classList.add('swk-upload-dragover');
+        });
+
+        area.addEventListener('dragleave', function () {
+            area.classList.remove('swk-upload-dragover');
+        });
+
+        area.addEventListener('drop', function (e) {
+            e.preventDefault();
+            area.classList.remove('swk-upload-dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        input.addEventListener('change', function () {
+            handleFiles(input.files);
+            input.value = '';
+        });
+
+        function handleFiles(files) {
+            for (var i = 0; i < files.length; i++) {
+                if (uploadedFiles.length >= 3) {
+                    showToast('Maximaal 3 bestanden toegestaan.', true);
+                    break;
+                }
+                var file = files[i];
+                if (!file.type.match(/^image\//) && file.type !== 'application/pdf') {
+                    showToast('Alleen afbeeldingen en PDFs zijn toegestaan.', true);
+                    continue;
+                }
+                if (file.size > 10 * 1024 * 1024) {
+                    showToast('Bestand is te groot (max 10MB).', true);
+                    continue;
+                }
+                uploadedFiles.push(file);
+            }
+            renderUploadPreview();
+        }
+
+        function renderUploadPreview() {
+            preview.innerHTML = '';
+            uploadedFiles.forEach(function (file, idx) {
+                var item = document.createElement('div');
+                item.className = 'swk-upload-item';
+
+                var name = document.createElement('span');
+                name.className = 'swk-upload-filename';
+                name.textContent = file.name;
+
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'swk-upload-remove';
+                removeBtn.textContent = '\u00D7';
+                removeBtn.addEventListener('click', function () {
+                    uploadedFiles.splice(idx, 1);
+                    renderUploadPreview();
+                });
+
+                item.appendChild(name);
+                item.appendChild(removeBtn);
+                preview.appendChild(item);
+            });
+        }
+    }
+
+    /* ──────────────────────────────────────────
        FORM SUBMISSION (via WP REST API)
        ────────────────────────────────────────── */
     function initFormSubmit() {
@@ -692,7 +766,7 @@
         btn.addEventListener('click', function () {
             // Honeypot check
             var hp = $('#swk-f-website');
-            if (hp && hp.value) return; // Bot detected
+            if (hp && hp.value) return;
 
             var fields = {
                 voornaam:    ($('#swk-f-voornaam')    || {}).value || '',
@@ -703,15 +777,15 @@
                 email:       ($('#swk-f-email')       || {}).value || '',
                 telefoon:    ($('#swk-f-telefoon')    || {}).value || '',
                 opmerkingen: ($('#swk-f-opmerkingen') || {}).value || '',
-                locatie_adres: ($('#swk-f-locatie-adres') || {}).value || ''
+                locatie_adres: ($('#swk-f-locatie-adres') || {}).value || '',
+                situatie_omschrijving: ($('#swk-f-situatie') || {}).value || '',
+                hoogteverschil: S.hoogteverschil
             };
 
-            // Trim
             Object.keys(fields).forEach(function (k) {
-                fields[k] = fields[k].trim();
+                if (typeof fields[k] === 'string') fields[k] = fields[k].trim();
             });
 
-            // Validate required fields
             if (!fields.voornaam || !fields.achternaam || !fields.straat || !fields.postcode || !fields.plaats || !fields.email || !fields.telefoon) {
                 showToast('Vul alle verplichte velden in.', true);
                 return;
@@ -743,41 +817,68 @@
                     betonpaal:   S.paal,
                     plaatsing:   S.plaatsing,
                     extras:      S.extras,
-                    totaalprijs: calcTotal()
+                    poorten:     S.poorten,
+                    hoogteverschil: S.hoogteverschil,
+                    vanafprijs:  calcTotal()
                 }
             };
 
             btn.textContent = 'Verzenden...';
             btn.disabled = true;
 
-            fetch(REST_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-WP-Nonce':   NONCE
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(function (r) {
+            // Use FormData if files are uploaded
+            if (uploadedFiles.length > 0) {
+                var formData = new FormData();
+                formData.append('json', JSON.stringify(payload));
+                uploadedFiles.forEach(function (file, i) {
+                    formData.append('foto_' + i, file);
+                });
+
+                fetch(REST_URL, {
+                    method: 'POST',
+                    headers: { 'X-WP-Nonce': NONCE },
+                    body: formData
+                })
+                .then(handleResponse)
+                .then(function () {
+                    clearState();
+                    showSuccess(fields.voornaam, fields.email);
+                })
+                .catch(handleError);
+            } else {
+                fetch(REST_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce':   NONCE
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(handleResponse)
+                .then(function () {
+                    clearState();
+                    showSuccess(fields.voornaam, fields.email);
+                })
+                .catch(handleError);
+            }
+
+            function handleResponse(r) {
                 return r.json().then(function (data) {
                     if (!r.ok) throw new Error(data.message || 'Fout bij verzenden');
                     return data;
                 });
-            })
-            .then(function () {
-                clearState();
-                showSuccess(fields.voornaam, fields.email);
-            })
-            .catch(function (err) {
+            }
+
+            function handleError(err) {
                 showToast(err.message || 'Er ging iets mis. Probeer het opnieuw.', true);
                 btn.textContent = 'Verstuur offerte aanvraag \u2192';
                 btn.disabled = false;
-            });
+            }
         });
     }
 
     function showSuccess(naam, email) {
-        var section = $('#swk-s8');
+        var section = $('#swk-s9');
         if (!section) return;
         var body = section.querySelector('.swk-card-body');
         if (!body) return;
@@ -798,12 +899,17 @@
     function initObserver() {
         if (typeof IntersectionObserver === 'undefined') return;
 
+        // Map section IDs to step numbers
+        var sectionStepMap = {};
+        $$('.swk-step-card').forEach(function (c, i) {
+            sectionStepMap[c.id] = i + 1;
+        });
+
         var obs = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
                 if (entry.isIntersecting) {
-                    var id = entry.target.id;
-                    var n  = parseInt(id.replace('swk-s', ''), 10);
-                    if (isNaN(n)) return;
+                    var n = sectionStepMap[entry.target.id];
+                    if (!n) return;
 
                     $$('.swk-step-tab').forEach(function (s, i) {
                         s.classList.remove('swk-active', 'swk-completed');
@@ -841,9 +947,6 @@
     }
 
     /* ──────────────────────────────────────────
-       INIT
-       ────────────────────────────────────────── */
-    /* ──────────────────────────────────────────
        LAZY LOADING
        ────────────────────────────────────────── */
     function initLazyLoading() {
@@ -871,7 +974,6 @@
        ACCESSIBILITY
        ────────────────────────────────────────── */
     function initAccessibility() {
-        // Make selectable cards keyboard-accessible
         $$('.swk-type-card, .swk-orient-item, .swk-choice, .swk-sit-item, .swk-extra, .swk-placement-option').forEach(function (el) {
             if (!el.getAttribute('tabindex')) el.setAttribute('tabindex', '0');
             if (!el.getAttribute('role')) el.setAttribute('role', 'button');
@@ -883,13 +985,11 @@
             });
         });
 
-        // Add aria-labels to toggle switches
         $$('.swk-toggle').forEach(function (el) {
             el.setAttribute('role', 'switch');
             el.setAttribute('aria-checked', el.classList.contains('swk-on') ? 'true' : 'false');
         });
 
-        // Add aria-labels to info tooltips
         $$('.swk-type-info').forEach(function (el) {
             el.setAttribute('aria-label', 'Meer informatie');
             el.setAttribute('role', 'button');
@@ -905,7 +1005,6 @@
             });
         });
 
-        // Scene image alt text
         var fenceImg = $('#swk-fence-img');
         if (fenceImg) fenceImg.setAttribute('alt', 'Live preview van uw schutting configuratie');
     }
@@ -963,9 +1062,7 @@
         // Restore situatie and side inputs
         var sitCard = document.querySelector('[data-swk-sit="' + S.situatie + '"]');
         if (sitCard) {
-            // Click triggers the full rebuild of side inputs
             sitCard.click();
-            // Fill in side values
             setTimeout(function () {
                 var inputs = $$('#swk-sides-container input');
                 inputs.forEach(function (inp, i) {
@@ -975,7 +1072,16 @@
             }, 50);
         }
 
-        updatePoortExtraDesc();
+        // Restore poorten
+        renderPoortConfig();
+
+        // Restore hoogteverschil
+        var hvContainer = $('#swk-hoogteverschil');
+        if (hvContainer) {
+            hvContainer.querySelectorAll('.swk-toggle-btn').forEach(function (btn) {
+                btn.classList.toggle('swk-toggle-btn-active', btn.getAttribute('data-value') === S.hoogteverschil);
+            });
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
@@ -989,11 +1095,13 @@
         initSitToggle();
         initPaalSelection();
         initPlacement();
+        initPoortCounter();
         initExtras();
-        initPoortModal();
         initProgressBar();
         initCTA();
         initLocationToggle();
+        initHoogteverschil();
+        initFileUpload();
         initFormSubmit();
         initObserver();
         initLazyLoading();
