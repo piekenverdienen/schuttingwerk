@@ -127,42 +127,6 @@
         try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* */ }
     }
 
-    function calcTotal() {
-        var len = getTotalLen();
-        var mat = MATERIALS[S.type];
-        var t   = (mat ? mat.price : 0) * len;
-
-        t += (PAAL_EX[S.paal] || 0) * len;
-
-        Object.keys(S.extras).forEach(function (k) {
-            if (!S.extras[k]) return;
-            var ex = EXTRAS[k];
-            if (!ex) return;
-            if (ex.unit === 'per_meter') {
-                t += ex.price * len;
-            } else {
-                t += ex.price;
-            }
-        });
-
-        // Add poorten prices
-        var gates = POORTEN[S.type] || POORTEN.grenen || [];
-        S.poorten.forEach(function (p) {
-            var widthIdx = POORT_BREEDTES.indexOf(p.breedte);
-            if (widthIdx >= 0 && gates[widthIdx]) {
-                t += gates[widthIdx].price;
-            }
-        });
-
-        // Plaatsing: snelbeton mortel = €14,50 per segment
-        if (S.plaatsing === 'mortel') {
-            var seg = Math.max(0, Math.round(len / 1.80));
-            t += seg * 14.50;
-        }
-
-        return t;
-    }
-
     function $(sel) {
         return document.querySelector(sel);
     }
@@ -209,12 +173,7 @@
         // Update mortel price display in placement option
         var mortelPriceEl = $('#swk-mortel-price');
         if (mortelPriceEl) {
-            var mortelSeg = Math.max(0, Math.round(len / 1.80));
-            if (len > 0) {
-                mortelPriceEl.textContent = 'vanaf ' + fmt(mortelSeg * 14.50) + ' (' + mortelSeg + ' seg.)';
-            } else {
-                mortelPriceEl.textContent = 'vanaf \u20AC14,50 /segment';
-            }
+            mortelPriceEl.textContent = 'vanaf \u20AC14,50 /segment';
         }
 
         // Poort
@@ -231,15 +190,6 @@
         // Montage
         var plMontage = $('#swk-pl-montage');
         if (plMontage) plMontage.style.display = S.extras.montage ? 'flex' : 'none';
-
-        // Total (vanaf)
-        var tot = calcTotal();
-        var pvTotal = $('#swk-pv-total');
-        if (pvTotal) pvTotal.textContent = fmt(tot);
-
-        // Per meter (vanaf)
-        var pvPm = $('#swk-pv-pm');
-        if (pvPm) pvPm.textContent = len > 0 ? 'vanaf ' + fmt(tot / len) + ' /m' : '\u20AC0,00 /m';
 
         // Meta stats
         var seg = Math.max(0, Math.round(len / 1.80));
@@ -295,7 +245,6 @@
         if (!el) return;
 
         var len   = getTotalLen();
-        var tot   = calcTotal();
         var mat   = MATERIALS[S.type];
         var sides = S.sides.map(function (v, i) {
             return (SIT_LABELS[S.situatie] || [])[i] + ': ' + v + 'm';
@@ -325,9 +274,6 @@
         });
 
         html += '<div class="swk-fs-row"><span class="swk-fs-l">Hoogteverschil &gt;25cm</span><span class="swk-fs-v">' + (S.hoogteverschil === 'ja' ? 'Ja' : 'Nee') + '</span></div>';
-
-        html += '<hr class="swk-fs-divider">';
-        html += '<div class="swk-fs-row"><span class="swk-fs-l"><strong>Indicatie vanaf prijs</strong></span><span class="swk-fs-v"><strong>vanaf ' + fmt(tot) + '</strong></span></div>';
 
         el.innerHTML = html;
     }
@@ -818,8 +764,7 @@
                     plaatsing:   S.plaatsing,
                     extras:      S.extras,
                     poorten:     S.poorten,
-                    hoogteverschil: S.hoogteverschil,
-                    vanafprijs:  calcTotal()
+                    hoogteverschil: S.hoogteverschil
                 }
             };
 
